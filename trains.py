@@ -57,19 +57,19 @@ def solve_throughput(args):
     else:
         opt.add(rtd >= DOCK_DURATION)
 
+    opt.add(trains > 0)
     if args.trains is not None:
         opt.add(trains <= args.trains)
-    else:
-        opt.add(trains > 0)
 
+    opt.add(cars > 0)
     if args.cars is not None:
         opt.add(cars <= args.cars)
-    else:
-        opt.add(cars > 0)
+
+    if not args.rtd or args.throughput:
+        opt.add(partial == full)
 
     if args.throughput is not None:
         opt.add(throughput >= args.throughput)
-        opt.maximize(throughput)
     else:
         opt.minimize(trains)
         opt.minimize(cars)
@@ -88,11 +88,11 @@ def solve_throughput(args):
         print_param("round trip duration", rtd)
         print_param("trains", trains)
         print_param("cars", cars)
-        if z3_to_python(model.eval(partial)) > z3_to_python(model.eval(full)):
+        if z3_to_python(model.eval(partial)) >= z3_to_python(model.eval(full)):
             loaded = "full"
         else:
             loaded = "partial"
-        print_param("throughput ({loaded})", throughput)
+        print_param(f"throughput ({loaded})", throughput)
 
 
 if __name__ == "__main__":
