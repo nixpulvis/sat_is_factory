@@ -4,6 +4,11 @@ from z3 import *
 DOCK_DURATION = 0.45133333
 CAR_CAPACITY = 32
 
+# Some basic upper limits on train sizes to help solver when user doesn't
+# constrain.
+TRAIN_MAX = 50
+CAR_MAX = 50
+
 def solve_throughput(args):
     def z3_min(a, b):
         return If(a < b, a, b)
@@ -40,24 +45,47 @@ def solve_throughput(args):
         opt.add(rtd >= DOCK_DURATION)
 
     opt.add(trains > 0)
+    opt.add(trains <= TRAIN_MAX)
+    if args.max_trains and args.trains and args.max_trains < args.trains:
+        raise "invalid --trains and --max-trains arguments"
+    if args.max_trains is not None:
+        opt.add(trains <= args.max_trains)
     if args.trains is not None:
-        opt.add(trains <= args.trains)
+        opt.add(trains == args.trains)
 
     opt.add(cars > 0)
+    opt.add(cars <= CAR_MAX)
+    if args.max_cars and args.cars and args.max_cars < args.cars:
+        raise "invalid --cars and --max-cars arguments"
+    if args.max_cars is not None:
+        opt.add(cars <= args.max_cars)
     if args.cars is not None:
-        opt.add(cars <= args.cars)
+        opt.add(cars == args.cars)
 
+    info = []
 
-    if args.rtd is None or args.throughput is None:
+    if args.cars is None:
+        info.append(f"minimize cars")
+        opt.minimize(cars)
+    if args.trains is None:
+        info.append(f"minimize trains")
+        opt.minimize(trains)
+    if args.rtd is None:
+        info.append(f"minimize rtd")
+        opt.minimize(rtd)
+
+    if args.rtd is None and args.throughput is None:
+        info.append("solving optimal throughput")
         opt.add(partial == full)
-    else:
+    elif args.throughput is not None:
+        info.append(f"minimize throughput >= {args.throughput}")
+        opt.add(throughput >= args.throughput)
+        opt.minimize(throughput)
+    elif args.rtd is not None:
+        info.append("maximizing throughput")
         opt.maximize(throughput)
 
-    if args.throughput is not None:
-        opt.add(throughput >= args.throughput)
-
-    opt.minimize(trains)
-    opt.minimize(cars)
+    print(", ".join(info))
 
     if opt.check() == sat:
         model = opt.model()
@@ -71,6 +99,10 @@ def solve_throughput(args):
         print()
         print("Solved:")
         print_param("round trip duration", rtd)
+        if z3_to_python(model.eval(trains)) == TRAIN_MAX:
+            print("warning: maximum train limit reached in solver")
+        if z3_to_python(model.eval(cars)) == CAR_MAX:
+            print("warning: maximum car limit reached in solver")
         print_param("trains", trains)
         print_param("cars", cars)
         if z3_to_python(model.eval(partial)) >= z3_to_python(model.eval(full)):
@@ -88,8 +120,10 @@ if __name__ == "__main__":
     parser.add_argument("--stack", type=int, default=100, help="Item stack quantity")
     parser.add_argument("--belt", type=int, default=1200, help="Max belt speed")
     parser.add_argument("--rtd", type=float, help="Round trip time, otherwise optimized for")
-    parser.add_argument("--trains", type=int, help="Max number of trains")
-    parser.add_argument("--cars", type=int, help="Max number of cars")
+    parser.add_argument("--max-trains", type=int, help="Max number of trains")
+    parser.add_argument("--trains", type=int, help="Number of trains")
+    parser.add_argument("--max-cars", type=int, help="Max number of cars")
+    parser.add_argument("--cars", type=int, help="Number of cars")
     parser.add_argument("--throughput", type=float, help="Min throughput needed")
 
     args = parser.parse_args()
