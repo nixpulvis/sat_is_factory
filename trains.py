@@ -65,14 +65,17 @@ def solve_throughput(args):
     if args.cars is not None:
         opt.add(cars <= args.cars)
 
+
     if args.rtd is None or args.throughput is None:
         opt.add(partial == full)
+    else:
+        opt.maximize(throughput)
 
     if args.throughput is not None:
         opt.add(throughput >= args.throughput)
-    else:
-        opt.minimize(trains)
-        opt.minimize(cars)
+
+    opt.minimize(trains)
+    opt.minimize(cars)
 
     if opt.check() == sat:
         model = opt.model()
