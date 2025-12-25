@@ -1,6 +1,6 @@
 import argparse
 
-from .train_solver import TrainSolver
+from sat_is_factory.train_solver import TrainSolver
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
