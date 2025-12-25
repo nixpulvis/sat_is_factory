@@ -40,14 +40,14 @@ def solve_throughput(args):
         if args.rtd > DOCK_DURATION:
             opt.add(rtd == args.rtd)
         else:
-            raise "invalid rtd"
+            raise ValueError("invalid rtd")
     else:
         opt.add(rtd >= DOCK_DURATION)
 
     opt.add(trains > 0)
     opt.add(trains <= TRAIN_MAX)
     if args.max_trains and args.trains and args.max_trains < args.trains:
-        raise "invalid --trains and --max-trains arguments"
+        raise ValueError("invalid --trains and --max-trains arguments")
     if args.max_trains is not None:
         opt.add(trains <= args.max_trains)
     if args.trains is not None:
@@ -56,7 +56,7 @@ def solve_throughput(args):
     opt.add(cars > 0)
     opt.add(cars <= CAR_MAX)
     if args.max_cars and args.cars and args.max_cars < args.cars:
-        raise "invalid --cars and --max-cars arguments"
+        raise ValueError("invalid --cars and --max-cars arguments")
     if args.max_cars is not None:
         opt.add(cars <= args.max_cars)
     if args.cars is not None:
@@ -114,11 +114,11 @@ def solve_throughput(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="TODO",
+        description="For pipes, use --stack 50 and --belt=<flowrate>",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument("--stack", type=int, default=100, help="Item stack quantity")
-    parser.add_argument("--belt", type=int, default=1200, help="Max belt speed")
+    parser.add_argument("--belt", type=int, default=1200, help="Belt speed")
     parser.add_argument("--rtd", type=float, help="Round trip time, otherwise optimized for")
     parser.add_argument("--max-trains", type=int, help="Max number of trains")
     parser.add_argument("--trains", type=int, help="Number of trains")
