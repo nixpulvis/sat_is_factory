@@ -19,7 +19,7 @@ class TestArgs:
 
 
 # Solves for optimal RtD and Throughput when neither is provided.
-class TestOptimalTrainSolver(unittest.TestCase):
+class TestOptimal(unittest.TestCase):
     def test_single_train(self):
         solver = TrainSolver(
             TestArgs(
@@ -142,7 +142,7 @@ class TestOptimalTrainSolver(unittest.TestCase):
 
 
 # Minimizing to get >= throughput
-class TestMinimizingThroughputTrainSolver(unittest.TestCase):
+class TestMinimizingThroughput(unittest.TestCase):
     def test_many_trains_and_cars(self):
         solver = TrainSolver(
             TestArgs(
@@ -199,7 +199,7 @@ class TestMinimizingThroughputTrainSolver(unittest.TestCase):
 
 
 # Maximizing throughput for a given RtD.
-class TestMaximizingThroughputTrainSolver(unittest.TestCase):
+class TestMaximizingThroughput(unittest.TestCase):
     def test_max_is_partial(self):
         solver = TrainSolver(
             TestArgs(
