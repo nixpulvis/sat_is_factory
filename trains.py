@@ -68,12 +68,21 @@ class TrainSolver:
 
         self.info = []
 
-        if args.cars is None:
-            self.info.append("minimize cars")
-            self.opt.minimize(self.cars)
-        if args.trains is None:
-            self.info.append("minimize trains")
-            self.opt.minimize(self.trains)
+        minimize = ["cars", "trains"]
+        if args.minimize is not None:
+            try:
+                minimize.remove(args.minimize)
+            except ValueError:
+                raise ValueError(
+                    "invalid minimization priority, must be one of 'cars' or 'trains'"
+                )
+            minimize.insert(0, args.minimize)
+
+        for var in minimize:
+            if getattr(args, var) is None:
+                self.info.append(f"minimize {var}")
+                self.opt.minimize(getattr(self, var))
+
         if args.rtd is None:
             self.info.append("minimize rtd")
             self.opt.minimize(self.rtd)
@@ -91,6 +100,7 @@ class TrainSolver:
 
     # TODO: Trains, Cars priority option.
     def solve(self):
+        print(", ".join(self.info))
         if self.opt.check() == sat:
             model = self.opt.model()
 
@@ -118,16 +128,13 @@ class TrainSolver:
                 print("warning: maximum car limit reached in solver")
 
             return {
-                "info": self.info,
-                "results": {
-                    "stack": z3_to_python(self.stack),
-                    "belt": z3_to_python(self.belt),
-                    "trains": z3_to_python(self.trains),
-                    "cars": z3_to_python(self.cars),
-                    "rtd": z3_to_python(self.rtd),
-                    "throughput": z3_to_python(self.throughput),
-                    "loaded": is_loaded(),
-                },
+                "stack": z3_to_python(self.stack),
+                "belt": z3_to_python(self.belt),
+                "trains": z3_to_python(self.trains),
+                "cars": z3_to_python(self.cars),
+                "rtd": z3_to_python(self.rtd),
+                "throughput": z3_to_python(self.throughput),
+                "loaded": is_loaded(),
             }
 
 
@@ -147,19 +154,30 @@ if __name__ == "__main__":
     parser.add_argument("--max-cars", type=int, help="Max number of cars")
     parser.add_argument("--cars", type=int, help="Number of cars")
     parser.add_argument("--throughput", type=float, help="Min throughput needed")
+    parser.add_argument(
+        "--minimize",
+        type=str,
+        help="Prioritize minimizing either trains, cars",
+    )
 
     args = parser.parse_args()
-    train_solver = TrainSolver(args)
-    solution = train_solver.solve()
 
-    if solution is not None:
-        print(", ".join(solution["info"]))
-        print(f"Stack Size: {solution['results']['stack']}")
-        print(f"Belt Speed: {solution['results']['belt']}")
-        print(f"Trains: {solution['results']['trains']}")
-        print(f"Cars: {solution['results']['cars']}")
-        print(f"Loaded: {solution['results']['loaded']}")
-        print(
-            f"Round Trip Time: {round(solution['results']['rtd'], 4)} min ({round(solution['results']['rtd'] * 60, 2)} sec)"
-        )
-        print(f"Throughput: {round(solution['results']['throughput'], 4)} items/min")
+    try:
+        train_solver = TrainSolver(args)
+        solution = train_solver.solve()
+
+        if solution is not None:
+            print(f"Stack Size: {solution['stack']}")
+            print(f"Belt Speed: {solution['belt']}")
+            print(f"Trains: {solution['trains']}")
+            print(f"Cars: {solution['cars']}")
+            print(f"Loaded: {solution['loaded']}")
+            print(
+                f"Round Trip Time: {round(solution['rtd'], 4)} min ({round(solution['rtd'] * 60, 2)} sec)"
+            )
+            print(f"Throughput: {round(solution['throughput'], 4)} items/min")
+        else:
+            print("No solution found.")
+
+    except ValueError as e:
+        print(f"Error: {e}")
