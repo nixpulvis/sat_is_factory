@@ -1,5 +1,6 @@
 import argparse
-from z3 import *
+
+from z3 import If, Int, IntNumRef, Optimize, RatNumRef, Real, sat
 
 DOCK_DURATION = 0.45133333
 CAR_CAPACITY = 32
@@ -8,6 +9,7 @@ CAR_CAPACITY = 32
 # constrain.
 TRAIN_MAX = 50
 CAR_MAX = 50
+
 
 def solve_throughput(args):
     def z3_min(a, b):
@@ -19,12 +21,12 @@ def solve_throughput(args):
         elif isinstance(v, RatNumRef):
             return v.numerator_as_long() / v.denominator_as_long()
 
-    rtd = Real('rtd')
-    belt = Int('belt')
-    stack = Int('stack')
+    rtd = Real("rtd")
+    belt = Int("belt")
+    stack = Int("stack")
 
-    trains = Int('trains')
-    cars = Int('cars')
+    trains = Int("trains")
+    cars = Int("cars")
 
     # Train equation
     partial = 2 * belt * cars * (rtd - DOCK_DURATION * trains) / rtd
@@ -65,13 +67,13 @@ def solve_throughput(args):
     info = []
 
     if args.cars is None:
-        info.append(f"minimize cars")
+        info.append("minimize cars")
         opt.minimize(cars)
     if args.trains is None:
-        info.append(f"minimize trains")
+        info.append("minimize trains")
         opt.minimize(trains)
     if args.rtd is None:
-        info.append(f"minimize rtd")
+        info.append("minimize rtd")
         opt.minimize(rtd)
 
     if args.rtd is None and args.throughput is None:
@@ -105,21 +107,29 @@ def solve_throughput(args):
             print("warning: maximum car limit reached in solver")
         print_param("trains", trains)
         print_param("cars", cars)
-        if z3_to_python(model.eval(partial)) >= z3_to_python(model.eval(full)):
-            loaded = "full"
+        partial_val = z3_to_python(model.eval(partial))
+        full_val = z3_to_python(model.eval(full))
+        if partial_val is not None and full_val is not None:
+            if partial_val >= full_val:
+                loaded = "full"
+            else:
+                loaded = "partial"
         else:
-            loaded = "partial"
+            loaded = "unknown"
         print_param(f"throughput ({loaded})", throughput)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="For pipes, use --stack 50 and --belt=<flowrate>",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
 
     parser.add_argument("--stack", type=int, default=100, help="Item stack quantity")
     parser.add_argument("--belt", type=int, default=1200, help="Belt speed")
-    parser.add_argument("--rtd", type=float, help="Round trip time, otherwise optimized for")
+    parser.add_argument(
+        "--rtd", type=float, help="Round trip time, otherwise optimized for"
+    )
     parser.add_argument("--max-trains", type=int, help="Max number of trains")
     parser.add_argument("--trains", type=int, help="Number of trains")
     parser.add_argument("--max-cars", type=int, help="Max number of cars")
@@ -128,4 +138,3 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     solve_throughput(args)
-
