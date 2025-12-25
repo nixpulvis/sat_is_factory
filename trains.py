@@ -65,7 +65,7 @@ def solve_throughput(args):
     if args.cars is not None:
         opt.add(cars <= args.cars)
 
-    if not args.rtd or args.throughput:
+    if args.rtd is None or args.throughput is None:
         opt.add(partial == full)
 
     if args.throughput is not None:
