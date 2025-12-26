@@ -182,6 +182,47 @@ class TestMinimizingThroughput(unittest.TestCase):
         self.assertAlmostEqual(solution["rtd"], 9, places=4)
         self.assertAlmostEqual(solution["throughput"], 3200, places=4)
 
+    def test_many_trains_and_max_cars_minimizing_trains(self):
+        solver = TrainSolver(
+            TestArgs(
+                {
+                    "stack": 100,
+                    "belt": 1200,
+                    "rtd": 9,
+                    "throughput": 3000,
+                    "max_cars": 4,
+                    "minimize": "trains",
+                }
+            )
+        )
+        solution = solver.solve()
+        self.assertIsNotNone(solution)
+        self.assertEqual(solution["trains"], 3)
+        self.assertEqual(solution["cars"], 3)
+        self.assertEqual(solution["loaded"], "full")
+        self.assertAlmostEqual(solution["rtd"], 9, places=4)
+        self.assertAlmostEqual(solution["throughput"], 3200, places=4)
+
+    def test_many_max_trains_and_cars(self):
+        solver = TrainSolver(
+            TestArgs(
+                {
+                    "stack": 100,
+                    "belt": 1200,
+                    "rtd": 13,
+                    "throughput": 3000,
+                    "max_trains": 2,
+                }
+            )
+        )
+        solution = solver.solve()
+        self.assertIsNotNone(solution)
+        self.assertEqual(solution["trains"], 2)
+        self.assertEqual(solution["cars"], 7)
+        self.assertEqual(solution["loaded"], "full")
+        self.assertAlmostEqual(solution["rtd"], 13, places=4)
+        self.assertAlmostEqual(solution["throughput"], 3446.1538, places=4)
+
     # TODO: Also not sure why this test is hanging when run with all the other tests.
     @unittest.skip("TODO: figure out if we can make this consistent")
     def test_cars_effects_rtd(self):
