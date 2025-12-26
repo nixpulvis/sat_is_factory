@@ -39,27 +39,27 @@ Solve for trains and cars needed given a fixed RtD and needed throughput.
 $ python3 -m sat_is_factory.train_solver --rtd 9 --throughput 3000
 
 minimize cars, minimize trains, minimize throughput >= 3000.0
-Stack Size: 100
-Belt Speed: 1200
+Stack Size: 100 items
+Belt Speed: 1200 items/min
 Trains: 5
 Cars: 2
 Loaded: full
 Round Trip Time: 9.0 min (540.0 sec)
-Throughput: 3555.5556 items/min
+Throughput: 3555.5556 items/min (74.07%)
 ```
 
 Solve for optimal RtD and throughput.
 ```sh
 $ python3 -m sat_is_factory.train_solver --stack 500 --belt 780
 
-minimize cars, minimize trains, minimize rtd, solving optimal throughput
-Stack Size: 500
-Belt Speed: 780
+minimize cars, minimize trains, minimize rtd, solving optimal
+Stack Size: 500 items
+Belt Speed: 780 items/min
 Trains: 1
 Cars: 1
 Loaded: full
 Round Trip Time: 10.7077 min (642.46 sec)
-Throughput: 1494.2457 items/min
+Throughput: 1494.2457 items/min (95.78%)
 ```
 
 ### Testing
@@ -67,3 +67,4 @@ Throughput: 1494.2457 items/min
 ```sh
 python3 -m unittest
 python3 -m unittest tests.test_train_solver.TestMaximizingThroughput.test_max_multiple_trains
+```

@@ -92,17 +92,27 @@ For pipes, use --stack 50 and --belt=<flowrate>
         solution = solver.solve()
         if solution is not None:
             if args.pipe is None:
-                print(f"Stack Size: {solution['stack']}")
-            print(
-                f"{'Belt' if args.pipe is None else 'Pipe'} Speed: {solution['dock_speed']}"
-            )
+                print(f"Stack Size: {solution['stack']} items")
+                print(f"Belt Speed: {solution['dock_speed']} items/min")
+            else:
+                print(f"Flow Rate: {solution['dock_speed']} m^3/min")
+
             print(f"Trains: {solution['trains']}")
             print(f"Cars: {solution['cars']}")
             print(f"Loaded: {solution['loaded']}")
             print(
                 f"Round Trip Time: {round(solution['rtd'], 4)} min ({round(solution['rtd'] * 60, 2)} sec)"
             )
-            print(f"Throughput: {round(solution['throughput'], 4)} items/min")
+            efficency = (
+                solution["throughput"]
+                / solution["dock_speed"]
+                / 2
+                / solution["cars"]
+                * 100
+            )
+            print(
+                f"Throughput: {round(solution['throughput'], 4)} items/min ({round(efficency, 2)}%)"
+            )
         else:
             print("No solution found.")
 
