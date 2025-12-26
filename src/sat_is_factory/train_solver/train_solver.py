@@ -1,4 +1,6 @@
-from z3 import If, Int, IntNumRef, Optimize, RatNumRef, Real, sat
+from z3 import Int, IntNumRef, Optimize, RatNumRef, Real, sat
+
+from sat_is_factory.z3_ext import Min
 
 DOCK_DURATION = 0.45133333
 CAR_CAPACITY = 32
@@ -7,10 +9,6 @@ CAR_CAPACITY = 32
 # constrain.
 TRAIN_MAX = 50
 CAR_MAX = 50
-
-
-def z3_min(a, b):
-    return If(a < b, a, b)
 
 
 class TrainSolver:
@@ -31,7 +29,7 @@ class TrainSolver:
             / self.rtd
         )
         self.full = CAR_CAPACITY * self.stack * self.trains * self.cars / self.rtd
-        self.throughput = z3_min(self.partial, self.full)
+        self.throughput = Min(self.partial, self.full)
 
         self.opt = Optimize()
 
