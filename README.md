@@ -2,7 +2,7 @@
 
 SAT solving for Satisfactory.
 
-Consistent with https://satisfactory.wiki.gg/wiki/Tutorial:Train_throughput, but works with multiple trains and cars. See [https://github.com/nixpulvis/sat_is_factory/blob/c66a67b8290bca102d4e243adf7c6d995ff53ef5/tests/test_train_solver.py#L76](the unit test) which verifies this.
+Consistent with https://satisfactory.wiki.gg/wiki/Tutorial:Train_throughput, but works with multiple trains and cars. See [the unit test](https://github.com/nixpulvis/sat_is_factory/blob/c66a67b8290bca102d4e243adf7c6d995ff53ef5/tests/test_train_solver.py#L76) which verifies this.
 
 More documentation coming to the `--help` message soon!
 
