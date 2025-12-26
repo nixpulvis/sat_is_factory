@@ -5,16 +5,11 @@ from sat_is_factory.z3_ext import Min
 DOCK_DURATION = 0.45133333
 CAR_CAPACITY = 32
 
-# Some basic upper limits on train sizes to help solver when user doesn't
-# constrain.
-TRAIN_MAX = 50
-CAR_MAX = 50
-
 
 class TrainSolver:
     def __init__(self, args):
         self.rtd = Real("rtd")
-        self.belt = Int("belt")
+        self.dock_speed = Int("dock_speed")
         self.stack = Int("stack")
 
         self.trains = Int("trains")
@@ -22,8 +17,8 @@ class TrainSolver:
 
         # Train equation
         self.partial = (
-            2
-            * self.belt
+            2  # TODO: Remove this
+            * self.dock_speed
             * self.cars
             * (self.rtd - DOCK_DURATION * self.trains)
             / self.rtd
@@ -34,7 +29,7 @@ class TrainSolver:
         self.opt = Optimize()
 
         self.opt.add(self.stack == args.stack)
-        self.opt.add(self.belt == args.belt)
+        self.opt.add(self.dock_speed == args.dock_speed)
 
         if args.rtd is not None:
             if args.rtd > DOCK_DURATION:
@@ -45,7 +40,6 @@ class TrainSolver:
             self.opt.add(self.rtd >= DOCK_DURATION)
 
         self.opt.add(self.trains > 0)
-        self.opt.add(self.trains <= TRAIN_MAX)
         if args.max_trains and args.trains and args.max_trains < args.trains:
             raise ValueError("invalid --trains and --max-trains arguments")
         if args.max_trains is not None:
@@ -54,7 +48,6 @@ class TrainSolver:
             self.opt.add(self.trains == args.trains)
 
         self.opt.add(self.cars > 0)
-        self.opt.add(self.cars <= CAR_MAX)
         if args.max_cars and args.cars and args.max_cars < args.cars:
             raise ValueError("invalid --cars and --max-cars arguments")
         if args.max_cars is not None:
@@ -83,14 +76,17 @@ class TrainSolver:
             self.info.append("minimize rtd")
             self.opt.minimize(self.rtd)
 
+        # If neither RtD or throughput are given, we can assume we want a
+        # solution for the optimal values of both.
         if args.rtd is None and args.throughput is None:
-            self.info.append("solving optimal throughput")
+            self.info.append("solving optimal")
             self.opt.add(self.partial == self.full)
+        # If a throughput is given, then we
         elif args.throughput is not None:
             self.info.append(f"minimize throughput >= {args.throughput}")
             self.opt.add(self.throughput >= args.throughput)
             self.opt.minimize(self.throughput)
-        elif args.rtd is not None:
+        else:
             self.info.append("maximizing throughput")
             self.opt.maximize(self.throughput)
 
@@ -117,15 +113,10 @@ class TrainSolver:
                     else:
                         return "partial"
 
-            if z3_to_python(self.trains) == TRAIN_MAX:
-                print("warning: maximum train limit reached in solver")
-            if z3_to_python(self.cars) == CAR_MAX:
-                print("warning: maximum car limit reached in solver")
-
             return {
                 "info": self.info,
                 "stack": z3_to_python(self.stack),
-                "belt": z3_to_python(self.belt),
+                "dock_speed": z3_to_python(self.dock_speed),
                 "trains": z3_to_python(self.trains),
                 "cars": z3_to_python(self.cars),
                 "rtd": z3_to_python(self.rtd),

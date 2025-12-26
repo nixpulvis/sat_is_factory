@@ -6,7 +6,7 @@ from sat_is_factory.train_solver import TrainSolver
 class TestArgs:
     def __init__(self, dict):
         self.stack = None
-        self.belt = None
+        self.dock_speed = None
         self.trains = None
         self.max_trains = None
         self.cars = None
@@ -25,7 +25,7 @@ class TestOptimal(unittest.TestCase):
             TestArgs(
                 {
                     "stack": 100,
-                    "belt": 1200,
+                    "dock_speed": 1200,
                     "trains": 1,
                     "cars": 1,
                 }
@@ -43,7 +43,7 @@ class TestOptimal(unittest.TestCase):
             TestArgs(
                 {
                     "stack": 100,
-                    "belt": 1200,
+                    "dock_speed": 1200,
                     "trains": 2,
                     "cars": 1,
                 }
@@ -60,7 +60,7 @@ class TestOptimal(unittest.TestCase):
             TestArgs(
                 {
                     "stack": 100,
-                    "belt": 1200,
+                    "dock_speed": 1200,
                     "trains": 1,
                     "cars": 2,
                 }
@@ -77,62 +77,62 @@ class TestOptimal(unittest.TestCase):
         cases = [
             {
                 "stack": 50,
-                "belt": 780,
+                "dock_speed": 780,
                 "rtd": 88.62 / 60,
                 "throughput": 1083.3,
             },
             {
                 "stack": 50,
-                "belt": 1200,
+                "dock_speed": 1200,
                 "rtd": 67.08 / 60,
                 "throughput": 1431.17,
             },
             {
                 "stack": 100,
-                "belt": 780,
+                "dock_speed": 780,
                 "rtd": 150.16 / 60,
                 "throughput": 1278.66,
             },
             {
                 "stack": 100,
-                "belt": 1200,
+                "dock_speed": 1200,
                 "rtd": 102.08 / 60,
                 "throughput": 1793.08,
             },
             {
                 "stack": 200,
-                "belt": 780,
+                "dock_speed": 780,
                 "rtd": 273.23 / 60,
                 "throughput": 1405.4,
             },
             {
                 "stack": 200,
-                "belt": 1200,
+                "dock_speed": 1200,
                 "rtd": 187.08 / 60,
                 "throughput": 2052.62,
             },
             {
                 "stack": 500,
-                "belt": 780,
+                "dock_speed": 780,
                 "rtd": 642.46 / 60,
                 "throughput": 1494.25,
             },
             {
                 "stack": 500,
-                "belt": 1200,
+                "dock_speed": 1200,
                 "rtd": 427.08 / 60,
                 "throughput": 2247.83,
             },
             {
                 "stack": 50,
-                "belt": 600,
+                "dock_speed": 600,
                 "rtd": 107.08 / 60,
                 "throughput": 896.52,
             },
         ]
         for case in cases:
             solver = TrainSolver(
-                TestArgs({k: case[k] for k in ["stack", "belt"] if k in case})
+                TestArgs({k: case[k] for k in ["stack", "dock_speed"] if k in case})
             )
             solution = solver.solve()
             self.assertIsNotNone(solution)
@@ -148,7 +148,7 @@ class TestMinimizingThroughput(unittest.TestCase):
             TestArgs(
                 {
                     "stack": 100,
-                    "belt": 1200,
+                    "dock_speed": 1200,
                     "rtd": 9,
                     "throughput": 3000,
                 }
@@ -167,7 +167,7 @@ class TestMinimizingThroughput(unittest.TestCase):
             TestArgs(
                 {
                     "stack": 100,
-                    "belt": 1200,
+                    "dock_speed": 1200,
                     "rtd": 9,
                     "throughput": 3000,
                     "minimize": "trains",
@@ -187,10 +187,11 @@ class TestMinimizingThroughput(unittest.TestCase):
             TestArgs(
                 {
                     "stack": 100,
-                    "belt": 1200,
+                    "dock_speed": 1200,
                     "rtd": 9,
                     "throughput": 3000,
                     "max_cars": 4,
+                    "max_trains": 10,  # TODO: Why is this needed?
                     "minimize": "trains",
                 }
             )
@@ -208,7 +209,7 @@ class TestMinimizingThroughput(unittest.TestCase):
             TestArgs(
                 {
                     "stack": 100,
-                    "belt": 1200,
+                    "dock_speed": 1200,
                     "rtd": 13,
                     "throughput": 3000,
                     "max_trains": 2,
@@ -228,7 +229,7 @@ class TestMinimizingThroughput(unittest.TestCase):
     def test_cars_effects_rtd(self):
         params = {
             "stack": 100,
-            "belt": 1200,
+            "dock_speed": 1200,
             "trains": 1,
             "throughput": 1000.0,
         }
@@ -246,7 +247,7 @@ class TestMaximizingThroughput(unittest.TestCase):
             TestArgs(
                 {
                     "stack": 100,
-                    "belt": 1200,
+                    "dock_speed": 1200,
                     "trains": 1,
                     "cars": 1,
                     "rtd": 1.65,
@@ -263,7 +264,7 @@ class TestMaximizingThroughput(unittest.TestCase):
             TestArgs(
                 {
                     "stack": 100,
-                    "belt": 1200,
+                    "dock_speed": 1200,
                     "trains": 1,
                     "cars": 1,
                     "rtd": 1.95,
@@ -280,7 +281,7 @@ class TestMaximizingThroughput(unittest.TestCase):
             TestArgs(
                 {
                     "stack": 100,
-                    "belt": 1200,
+                    "dock_speed": 1200,
                     "trains": 2,
                     "cars": 1,
                     "rtd": 1.95,
@@ -297,7 +298,7 @@ class TestMaximizingThroughput(unittest.TestCase):
             TestArgs(
                 {
                     "stack": 100,
-                    "belt": 1200,
+                    "dock_speed": 1200,
                     "trains": 2,
                     "cars": 2,
                     "rtd": 1.95,

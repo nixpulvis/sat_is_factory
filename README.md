@@ -2,9 +2,12 @@
 
 SAT solving for Satisfactory.
 
-Consistent with https://satisfactory.wiki.gg/wiki/Tutorial:Train_throughput, but works with multiple trains and cars. See [the unit test](https://github.com/nixpulvis/sat_is_factory/blob/c66a67b8290bca102d4e243adf7c6d995ff53ef5/tests/test_train_solver.py#L76) which verifies this.
+Consistent with https://satisfactory.wiki.gg/wiki/Tutorial:Train_throughput, but
+works with multiple trains and cars. See [the unit
+test](https://github.com/nixpulvis/sat_is_factory/blob/c66a67b8290bca102d4e243adf7c6d995ff53ef5/tests/test_train_solver.py#L76)
+which verifies this.
 
-More documentation coming to the `--help` message soon!
+For more information read the `--help` message.
 
 ### Setup
 
@@ -20,25 +23,9 @@ pip3 install --editable .
 ```sh
 $ python3 -m sat_is_factory.train_solver --help
 
-usage: python3 -m sat_is_factory.train_solver [-h] [--stack STACK] [--belt BELT] [--rtd RTD]
-                                              [--max-trains MAX_TRAINS] [--trains TRAINS] [--max-cars MAX_CARS]
-                                              [--cars CARS] [--throughput THROUGHPUT] [--minimize MINIMIZE]
-
-For pipes, use --stack 50 and --belt=<flowrate>
-
-options:
-  -h, --help            show this help message and exit
-  --stack STACK         Item stack quantity (default: 100)
-  --belt BELT           Belt speed (default: 1200)
-  --rtd RTD             Round trip time, otherwise optimized for (default: None)
-  --max-trains MAX_TRAINS
-                        Max number of trains (default: None)
-  --trains TRAINS       Number of trains (default: None)
-  --max-cars MAX_CARS   Max number of cars (default: None)
-  --cars CARS           Number of cars (default: None)
-  --throughput THROUGHPUT
-                        Min throughput needed (default: None)
-  --minimize MINIMIZE   Prioritize minimizing either trains, cars (default: None)
+usage: python3 -m sat_is_factory.train_solver [-h] [--stack STACK] [--belt BELT] [--pipe [PIPE]] [--trains TRAINS] [--max-trains MAX_TRAINS] [--cars CARS]
+                                              [--max-cars MAX_CARS] [--minimize MINIMIZE] [--rtd RTD] [--throughput THROUGHPUT]
+...
 ```
 
 ### Examples
