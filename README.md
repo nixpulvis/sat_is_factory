@@ -25,18 +25,17 @@ pip3 install --editable .
 
 ### Usage
 
-```sh
-$ python3 -m sat_is_factory.train_solver --help
-
-usage: python3 -m sat_is_factory.train_solver [-h] [--stack STACK] [--belt BELT] [--pipe [PIPE]] [--trains TRAINS] [--max-trains MAX_TRAINS] [--cars CARS]
-                                              [--max-cars MAX_CARS] [--minimize MINIMIZE] [--rtd RTD] [--throughput THROUGHPUT]
-...
+```
+usage: python3 -m sat_is_factory.train_solver [-h]
+  [--stack STACK] [--belt BELT] [--pipe [PIPE]]
+  [--trains TRAINS] [--max-trains MAX_TRAINS] [--cars CARS] [--max-cars MAX_CARS] [--minimize MINIMIZE]
+  [--rtd RTD] [--throughput THROUGHPUT]
 ```
 
 ### Examples
 
+Solve for trains and cars needed given a fixed RtD and needed throughput.
 ```sh
-# Solve for trains and cars needed given a fixed RtD and needed throughput.
 $ python3 -m sat_is_factory.train_solver --rtd 9 --throughput 3000
 
 minimize cars, minimize trains, minimize throughput >= 3000.0
@@ -47,8 +46,10 @@ Cars: 2
 Loaded: full
 Round Trip Time: 9.0 min (540.0 sec)
 Throughput: 3555.5556 items/min
+```
 
-# Solve for optimal RtD and throughput.
+Solve for optimal RtD and throughput.
+```sh
 $ python3 -m sat_is_factory.train_solver --stack 500 --belt 780
 
 minimize cars, minimize trains, minimize rtd, solving optimal throughput
