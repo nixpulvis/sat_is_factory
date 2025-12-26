@@ -191,7 +191,6 @@ class TestMinimizingThroughput(unittest.TestCase):
                     "rtd": 9,
                     "throughput": 3000,
                     "max_cars": 4,
-                    "max_trains": 10,  # TODO: Why is this needed?
                     "minimize": "trains",
                 }
             )

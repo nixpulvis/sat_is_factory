@@ -5,6 +5,9 @@ from sat_is_factory.z3_ext import Min
 DOCK_DURATION = 0.45133333
 CAR_CAPACITY = 32
 
+ABSOLUTE_MAX_TRAINS = 50
+ABSOLUTE_MAX_CARS = 50
+
 
 class TrainSolver:
     def __init__(self, args):
@@ -40,6 +43,7 @@ class TrainSolver:
             self.opt.add(self.rtd >= DOCK_DURATION)
 
         self.opt.add(self.trains > 0)
+        self.opt.add(self.trains <= ABSOLUTE_MAX_TRAINS)
         if args.max_trains and args.trains and args.max_trains < args.trains:
             raise ValueError("invalid --trains and --max-trains arguments")
         if args.max_trains is not None:
@@ -48,6 +52,7 @@ class TrainSolver:
             self.opt.add(self.trains == args.trains)
 
         self.opt.add(self.cars > 0)
+        self.opt.add(self.cars <= ABSOLUTE_MAX_CARS)
         if args.max_cars and args.cars and args.max_cars < args.cars:
             raise ValueError("invalid --cars and --max-cars arguments")
         if args.max_cars is not None:
@@ -112,6 +117,11 @@ class TrainSolver:
                         return "full"
                     else:
                         return "partial"
+
+            if z3_to_python(self.trains) == ABSOLUTE_MAX_TRAINS:
+                print("warning: absolute maximum train limit reached in solver")
+            if z3_to_python(self.cars) == ABSOLUTE_MAX_CARS:
+                print("warning: absolute maximum car limit reached in solver")
 
             return {
                 "info": self.info,
