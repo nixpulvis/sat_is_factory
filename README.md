@@ -16,11 +16,27 @@ For more information read the `--help` message.
 
 ### Setup
 
+Install the package.
+
 ```sh
-# Setup a venv (optional)
+pip3 install .
+# Use `--editable` if you plan to edit this package.
+```
+
+Optionally set up a virtual environment (venv) first, then install inside the
+venv.
+
+```sh
 python3 -m venv .venv
-source .venv/bin/activate # add .fish for fish shell.
-pip3 install --editable .
+
+# Bash
+source .venv/bin/activate 
+# Fish
+source .venv/bin/activate.fish
+# CMD (Windows)
+.\.venv\Scripts\activate
+# PowerShell (Windows)
+.\.venv\Scripts\activate.ps1
 ```
 
 ### Usage
