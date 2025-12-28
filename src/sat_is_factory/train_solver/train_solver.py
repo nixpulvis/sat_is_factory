@@ -2,7 +2,7 @@ from z3 import Int, IntNumRef, Optimize, RatNumRef, Real, sat
 
 from sat_is_factory.z3_ext import Min
 
-DOCK_DURATION = 0.45133333
+DOCK_DURATION = 0.45133333  # 27.08 sec
 CAR_CAPACITY = 32
 
 ABSOLUTE_MAX_TRAINS = 50
@@ -30,6 +30,7 @@ class TrainSolver:
         self.throughput = Min(self.partial, self.full)
 
         self.opt = Optimize()
+        self.opt.add(self.throughput > 0)
 
         self.opt.add(self.stack == args.stack)
         self.opt.add(self.dock_speed == args.dock_speed)
