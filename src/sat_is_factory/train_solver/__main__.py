@@ -1,4 +1,5 @@
 import argparse
+import re
 
 from sat_is_factory.train_solver import TrainSolver
 
@@ -7,6 +8,16 @@ class Formatter(
     argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescriptionHelpFormatter
 ):
     pass
+
+
+def time(str):
+    match = re.search("(?P<minutes>\\d+):(?P<seconds>\\d+(\\.\\d+)?)", str)
+    if match:
+        minutes = int(match.group("minutes"))
+        seconds = float(match.group("seconds"))
+        return minutes + seconds / 60.0
+    else:
+        return float(str)
 
 
 if __name__ == "__main__":
@@ -73,7 +84,7 @@ For pipes, use --stack 50 and --belt=<flowrate>
 
     route = parser.add_argument_group("route constraints")
     route.add_argument(
-        "--rtd", type=float, help="Round trip duration, otherwise optimized for"
+        "--rtd", type=time, help="Round trip duration, otherwise optimized for"
     )
     route.add_argument("--throughput", type=float, help="Minimum throughput")
 
