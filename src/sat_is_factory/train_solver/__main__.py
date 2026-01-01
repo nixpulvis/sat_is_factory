@@ -3,6 +3,8 @@ import re
 
 from sat_is_factory.train_solver import TrainSolver
 
+STACK_SENTINAL = object()
+
 
 class Formatter(
     argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescriptionHelpFormatter
@@ -52,7 +54,9 @@ For pipes, use --stack 50 and --belt=<flowrate>
     )
 
     constants = parser.add_argument_group("constants")
-    constants.add_argument("--stack", type=int, default=100, help="Item stack quantity")
+    constants.add_argument(
+        "--stack", type=int, default=STACK_SENTINAL, help="Item stack quantity"
+    )
     constants.add_argument("--belt", type=int, default=1200, help="Belt speed")
     constants.add_argument(
         "--pipe",
@@ -91,10 +95,15 @@ For pipes, use --stack 50 and --belt=<flowrate>
     args = parser.parse_args()
 
     if args.pipe:
-        args.stack = 50
         args.dock_speed = args.pipe
+        if args.stack == STACK_SENTINAL:
+            args.stack = 50
+        else:
+            raise ValueError("cannot use --stack with --pipe")
     else:
         args.dock_speed = args.belt
+        if args.stack == STACK_SENTINAL:
+            args.stack = 100
 
     try:
         solver = TrainSolver(args)
