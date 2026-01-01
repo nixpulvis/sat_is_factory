@@ -12,7 +12,7 @@ ABSOLUTE_MAX_CARS = 50
 class TrainSolver:
     def __init__(self, args):
         self.rtd = Real("rtd")
-        self.dock_speed = Int("dock_speed")
+        self.platform_rate = Int("platform_rate")
         self.stack = Int("stack")
 
         self.trains = Int("trains")
@@ -20,8 +20,7 @@ class TrainSolver:
 
         # Train equation
         self.partial = (
-            2  # TODO: Remove this
-            * self.dock_speed
+            self.platform_rate
             * self.cars
             * (self.rtd - DOCK_DURATION * self.trains)
             / self.rtd
@@ -33,7 +32,7 @@ class TrainSolver:
         self.opt.add(self.throughput > 0)
 
         self.opt.add(self.stack == args.stack)
-        self.opt.add(self.dock_speed == args.dock_speed)
+        self.opt.add(self.platform_rate == args.platform_rate)
 
         if args.rtd is not None:
             if args.rtd > DOCK_DURATION:
@@ -127,7 +126,7 @@ class TrainSolver:
             return {
                 "info": self.info,
                 "stack": z3_to_python(self.stack),
-                "dock_speed": z3_to_python(self.dock_speed),
+                "platform_rate": z3_to_python(self.platform_rate),
                 "trains": z3_to_python(self.trains),
                 "cars": z3_to_python(self.cars),
                 "rtd": z3_to_python(self.rtd),

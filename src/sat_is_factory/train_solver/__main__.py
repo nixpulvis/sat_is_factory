@@ -95,13 +95,13 @@ For pipes, use --stack 50 and --belt=<flowrate>
     args = parser.parse_args()
 
     if args.pipe:
-        args.dock_speed = args.pipe
+        args.platform_rate = args.pipe * 2
         if args.stack == STACK_SENTINAL:
             args.stack = 50
         else:
             raise ValueError("cannot use --stack with --pipe")
     else:
-        args.dock_speed = args.belt
+        args.platform_rate = args.belt * 2
         if args.stack == STACK_SENTINAL:
             args.stack = 100
 
@@ -112,10 +112,11 @@ For pipes, use --stack 50 and --belt=<flowrate>
         solution = solver.solve()
         if solution is not None:
             if args.pipe is None:
-                print(f"Stack Size: {solution['stack']} items")
-                print(f"Belt Speed: {solution['dock_speed']} items/min")
+                unit = "items"
+                print(f"Stack Size: {solution['stack']} {unit}")
             else:
-                print(f"Flow Rate: {solution['dock_speed']} m^3/min")
+                unit = "m^3"
+            print(f"Platform Rate: {solution['platform_rate']} {unit}/min")
 
             print(f"Trains: {solution['trains']}")
             print(f"Cars: {solution['cars']}")
@@ -125,13 +126,12 @@ For pipes, use --stack 50 and --belt=<flowrate>
             )
             efficency = (
                 solution["throughput"]
-                / solution["dock_speed"]
-                / 2
+                / solution["platform_rate"]
                 / solution["cars"]
                 * 100
             )
             print(
-                f"Throughput: {round(solution['throughput'], 4)} items/min ({round(efficency, 2)}%)"
+                f"Throughput: {round(solution['throughput'], 4)} {unit}/min ({round(efficency, 2)}%)"
             )
         else:
             print("No solution found.")
