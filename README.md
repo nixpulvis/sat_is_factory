@@ -23,8 +23,9 @@ pip3 install .
 # Use `--editable` if you plan to edit this package.
 ```
 
-Optionally set up a virtual environment (venv) first, then install inside the
-venv.
+<details>
+<summary>Optionally set up a virtual environment (venv) first, then install
+inside the venv.</summary>
 
 ```sh
 python3 -m venv .venv
@@ -38,6 +39,7 @@ source .venv/bin/activate.fish
 # PowerShell (Windows)
 .\.venv\Scripts\activate.ps1
 ```
+</details>
 
 ### Usage
 
