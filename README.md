@@ -20,6 +20,7 @@ Install the package.
 
 ```sh
 pip3 install .
+
 # Use `--editable` if you plan to edit this package.
 ```
 
