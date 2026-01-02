@@ -66,7 +66,7 @@ full with 3200 items (32 stacks)
 
 Solve for optimal RtD and throughput.
 ```sh
-$ python3 -m sat_is_factory.train_solver --stack 500 --belt 780
+$ python3 -m sat_is_factory.train_solver --stack 500 --platform 1560
 minimize cars, minimize trains, minimize rtd, optimal
 
 1 train
