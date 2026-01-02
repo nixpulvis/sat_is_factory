@@ -129,7 +129,7 @@ class TrainSolver:
         self.opt.add(self.platform_rate == self.args.platform_rate)
         self.opt.add(self.throughput > 0)
 
-        # If neither RtD or throughput are given, we can assume we want a
+        # If neither RTD or throughput are given, we can assume we want a
         # solution for the optimal values of both.
         if (
             self.args.rtd is None

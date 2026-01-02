@@ -21,7 +21,7 @@ class TestArgs:
             setattr(self, key, value)
 
 
-# Solves for optimal RtD and Throughput when neither is provided.
+# Solves for optimal RTD and Throughput when neither is provided.
 class TestOptimal(unittest.TestCase):
     def test_single_train(self):
         solver = TrainSolver(
@@ -40,7 +40,7 @@ class TestOptimal(unittest.TestCase):
         self.assertAlmostEqual(solution["rtd"], 1.7847, places=4)
         self.assertAlmostEqual(solution["throughput"], 1793.0519, places=4)
 
-    # Solves for optimal RtD and Throughput when neither is provided.
+    # Solves for optimal RTD and Throughput when neither is provided.
     def test_multiple_train(self):
         solver = TrainSolver(
             TestArgs(
@@ -242,7 +242,7 @@ class TestMinimizingThroughput(unittest.TestCase):
         self.assertEqual(solution_a, solution_b)
 
 
-# Maximizing throughput for a given RtD.
+# Maximizing throughput for a given RTD.
 class TestMaximizingThroughput(unittest.TestCase):
     def test_max_is_partial(self):
         solver = TrainSolver(
