@@ -11,12 +11,15 @@ ABSOLUTE_MAX_CARS = 50
 
 class TrainSolver:
     def __init__(self, args):
-        self.rtd = Real("rtd")
-        self.platform_rate = Int("platform_rate")
         self.stack = Int("stack")
+        self.input_rate = Real("input_rate")
+        self.platform_rate = Int("platform_rate")
+        self.output_rate = Real("output_rate")
 
         self.trains = Int("trains")
         self.cars = Int("cars")
+
+        self.rtd = Real("rtd")
 
         # Train equation
         self.partial = (
@@ -28,10 +31,30 @@ class TrainSolver:
         self.full = CAR_CAPACITY * self.stack * self.trains * self.cars / self.rtd
         self.throughput = Min(self.partial, self.full)
 
+        self.loaded = self.throughput * self.rtd / (self.trains * self.cars)
+
+        if args.input_rate is None:
+            self.input_rate = self.throughput
+            self.output_rate = self.throughput
+        else:
+            self.output_rate = Min(self.throughput, self.input_rate)
+
+        self.input_buffer_size = DOCK_DURATION * self.input_rate
+        self.input_buffer_time = self.input_buffer_size / (
+            self.platform_rate - self.input_rate
+        )
+
+        self.output_buffer_size = DOCK_DURATION * self.output_rate
+        self.output_buffer_time = self.output_buffer_size / (
+            self.platform_rate - self.output_rate
+        )
+
         self.opt = Optimize()
         self.opt.add(self.throughput > 0)
 
         self.opt.add(self.stack == args.stack)
+        if args.input_rate:
+            self.opt.add(self.input_rate == args.input_rate)
         self.opt.add(self.platform_rate == args.platform_rate)
 
         if args.rtd is not None:
@@ -84,7 +107,7 @@ class TrainSolver:
         # If neither RtD or throughput are given, we can assume we want a
         # solution for the optimal values of both.
         if args.rtd is None and args.throughput is None:
-            self.info.append("solving optimal")
+            self.info.append("optimal")
             self.opt.add(self.partial == self.full)
         # If a throughput is given, then we
         elif args.throughput is not None:
@@ -109,15 +132,6 @@ class TrainSolver:
                         evaluated.numerator_as_long() / evaluated.denominator_as_long()
                     )
 
-            def is_loaded():
-                partial_val = z3_to_python(self.partial)
-                full_val = z3_to_python(self.full)
-                if partial_val is not None and full_val is not None:
-                    if partial_val >= full_val:
-                        return "full"
-                    else:
-                        return "partial"
-
             if z3_to_python(self.trains) == ABSOLUTE_MAX_TRAINS:
                 print("warning: absolute maximum train limit reached in solver")
             if z3_to_python(self.cars) == ABSOLUTE_MAX_CARS:
@@ -126,10 +140,20 @@ class TrainSolver:
             return {
                 "info": self.info,
                 "stack": z3_to_python(self.stack),
+                "input_rate": z3_to_python(self.input_rate),
                 "platform_rate": z3_to_python(self.platform_rate),
                 "trains": z3_to_python(self.trains),
                 "cars": z3_to_python(self.cars),
+                "loaded": z3_to_python(self.loaded),
                 "rtd": z3_to_python(self.rtd),
                 "throughput": z3_to_python(self.throughput),
-                "loaded": is_loaded(),
+                "output_rate": z3_to_python(self.output_rate),
+                "input_buffer": {
+                    "size": z3_to_python(self.input_buffer_size),
+                    "time": z3_to_python(self.input_buffer_time),
+                },
+                "output_buffer": {
+                    "size": z3_to_python(self.output_buffer_size),
+                    "time": z3_to_python(self.output_buffer_time),
+                },
             }

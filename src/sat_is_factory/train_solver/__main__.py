@@ -1,9 +1,12 @@
 import argparse
+import math
 import re
 
 from sat_is_factory.train_solver import TrainSolver
+from sat_is_factory.train_solver.train_solver import CAR_CAPACITY
 
 STACK_SENTINAL = object()
+PLATFORM_SENTINAL = object()
 
 
 class Formatter(
@@ -22,6 +25,23 @@ def time(str):
         return float(str)
 
 
+def fmt_time(minutes):
+    m, s = divmod(minutes * 60, 60)
+    m, s = int(m), round(s, 2)
+    if m > 0:
+        return f"{m} min {s} sec"
+    else:
+        return f"{s} sec"
+
+
+# Super incomplete for all of English, but enough for now.
+def pluralize(name, count):
+    if count == 1:
+        return f"{count} {name}"
+    else:
+        return f"{count} {name}s"
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="""
@@ -35,8 +55,9 @@ Depending on the input flags, the program will either:
 - Maximize the throughput for a given RtD
 
 Take note of the default values, which assume common stack sizes of 100 and
-maximum belt speeds of 1,200 items/min. There are also somewhat reasonable
-default maximum values for the number of trains and cars per train.
+maximum platform speeds of 2,400 items/min (or 1,200 m^3/min for fluids). There
+are also somewhat reasonable default maximum values for the number of trains and
+cars per train.
 
 Use the `--minimize trains` flag if you wish to solve for routes with fewer
 trains while increasing the number of cars per train.
@@ -48,7 +69,7 @@ until it's fully loaded/unloaded AND 0 seconds. A more generic method, if the
 train is partially loaded, or carrying other items, is to set the train to wait
 until one load/unload AND `RtD / number of trains` (TODO: test this).
 
-For pipes, use --stack 50 and --belt=<flowrate>
+For pipes, use --fluid, which sets the "stack" size appropriately to 50.
 """,
         formatter_class=Formatter,
     )
@@ -57,13 +78,23 @@ For pipes, use --stack 50 and --belt=<flowrate>
     constants.add_argument(
         "--stack", type=int, default=STACK_SENTINAL, help="Item stack quantity"
     )
-    constants.add_argument("--belt", type=int, default=1200, help="Belt speed")
     constants.add_argument(
-        "--pipe",
+        "--platform",
         type=int,
-        nargs="?",
-        const=600,
-        help="Pipe speed (sets --stack to 50)",
+        dest="platform_rate",
+        default=PLATFORM_SENTINAL,
+        help="Platform loading speed (sum of belt/pipe speeds)",
+    )
+    constants.add_argument(
+        "--fluid",
+        action="store_true",
+        help="Using fluids (sets --stack to 50)",
+    )
+    constants.add_argument(
+        "--input",
+        type=float,
+        dest="input_rate",
+        help="Input rate (TODO: split between platforms)",
     )
 
     train = parser.add_argument_group("train constraints")
@@ -94,36 +125,46 @@ For pipes, use --stack 50 and --belt=<flowrate>
 
     args = parser.parse_args()
 
-    if args.pipe:
-        args.platform_rate = args.pipe * 2
+    if args.fluid:
         if args.stack == STACK_SENTINAL:
-            args.stack = 50
+            args.stack = 1600 / CAR_CAPACITY
         else:
-            raise ValueError("cannot use --stack with --pipe")
+            raise ValueError("cannot use --stack with --fluid")
+        if args.platform_rate == PLATFORM_SENTINAL:
+            args.platform_rate = 1200
     else:
-        args.platform_rate = args.belt * 2
         if args.stack == STACK_SENTINAL:
             args.stack = 100
+        if args.platform_rate == PLATFORM_SENTINAL:
+            args.platform_rate = 2400
 
     try:
         solver = TrainSolver(args)
-        print(", ".join(solver.info))
+        print(f"Solving: {', '.join(solver.info)}")
+        print()
 
         solution = solver.solve()
         if solution is not None:
-            if args.pipe is None:
-                unit = "items"
-                print(f"Stack Size: {solution['stack']} {unit}")
-            else:
+            if args.fluid:
                 unit = "m^3"
-            print(f"Platform Rate: {solution['platform_rate']} {unit}/min")
+            else:
+                unit = "items"
 
-            print(f"Trains: {solution['trains']}")
-            print(f"Cars: {solution['cars']}")
-            print(f"Loaded: {solution['loaded']}")
+            if solution["loaded"] < CAR_CAPACITY * solution["stack"]:
+                loaded_kind = "partially filled"
+            else:
+                loaded_kind = "full"
+            print(pluralize("train", solution["trains"]))
+            print(pluralize("car", solution["cars"]))
+            stacks = math.ceil(solution["loaded"] / solution["stack"])
             print(
-                f"Round Trip Time: {round(solution['rtd'], 4)} min ({round(solution['rtd'] * 60, 2)} sec)"
+                f"{loaded_kind} with {round(solution['loaded'])} {unit} ({pluralize('stack', stacks)})"
             )
+            print(f"{fmt_time(solution['rtd'])} per round trip.")
+
+            if args.input_rate:
+                print(f"{solution['input_rate']} {unit}/min input rate")
+            print(f"{solution['platform_rate']} {unit}/min active platform rate")
             efficency = (
                 solution["throughput"]
                 / solution["platform_rate"]
@@ -131,7 +172,25 @@ For pipes, use --stack 50 and --belt=<flowrate>
                 * 100
             )
             print(
-                f"Throughput: {round(solution['throughput'], 4)} {unit}/min ({round(efficency, 2)}%)"
+                f"{round(solution['throughput'], 4)} {unit}/min throughput ({round(efficency, 2)}% of platform)"
+            )
+            if args.input_rate:
+                ratio = solution["output_rate"] / solution["input_rate"] * 100
+                print(
+                    f"{round(solution['output_rate'], 4)} {unit}/min output rate ({round(ratio, 2)}% of input)"
+                )
+
+            # If the input buffer isn't the same as the output buffer, the input
+            # rate must be larger than the throughput and it will be useless.
+            if solution["input_buffer"] == solution["output_buffer"]:
+                buffer_label = "buffers"
+            else:
+                print("input buffer would be saturated and useless")
+                buffer_label = "output buffer"
+            buffer_size = round(solution["output_buffer"]["size"], 2)
+            buffer_time = fmt_time(solution["output_buffer"]["time"])
+            print(
+                f"{buffer_size} {unit} in {buffer_label}, empties {buffer_time} after (un)load"
             )
         else:
             print("No solution found.")
