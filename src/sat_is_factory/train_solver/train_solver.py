@@ -31,13 +31,17 @@ class TrainSolver:
         self.full = CAR_CAPACITY * self.stack * self.trains * self.cars / self.rtd
         self.throughput = Min(self.partial, self.full)
 
-        self.loaded = self.throughput * self.rtd / (self.trains * self.cars)
-
         if args.input_rate is None:
             self.input_rate = self.throughput
             self.output_rate = self.throughput
+            self.loaded = self.throughput * self.rtd / (self.trains * self.cars)
         else:
             self.output_rate = Min(self.throughput, self.input_rate)
+            self.loaded = (
+                Min(self.throughput, self.input_rate)
+                * self.rtd
+                / (self.trains * self.cars)
+            )
 
         self.input_buffer_size = DOCK_DURATION * self.input_rate
         self.input_buffer_time = self.input_buffer_size / (
@@ -106,14 +110,21 @@ class TrainSolver:
 
         # If neither RtD or throughput are given, we can assume we want a
         # solution for the optimal values of both.
-        if args.rtd is None and args.throughput is None:
+        if args.rtd is None and args.throughput is None and args.input_rate is None:
             self.info.append("optimal")
             self.opt.add(self.partial == self.full)
-        # If a throughput is given, then we
+        # If a throughput is given, we use that.
         elif args.throughput is not None:
             self.info.append(f"minimize throughput >= {args.throughput}")
             self.opt.add(self.throughput >= args.throughput)
             self.opt.minimize(self.throughput)
+        # Otherwise we try to solve for the given input rate.
+        elif args.input_rate is not None:
+            self.info.append(f"minimize throughput >= {args.input_rate}")
+            self.opt.add(self.throughput >= args.input_rate)
+            self.opt.minimize(self.throughput)
+        # If neither are given, but we have a round trip time, we find the
+        # maximum value.
         else:
             self.info.append("maximizing throughput")
             self.opt.maximize(self.throughput)
