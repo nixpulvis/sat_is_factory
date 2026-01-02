@@ -53,7 +53,7 @@ usage: python3 -m sat_is_factory.train_solver [-h]
 
 Solve for trains and cars needed given a fixed RtD and needed throughput.
 ```sh
-$ python3 -m sat_is_factory.train_solver --rtd 9 --throughput 3000
+$ train-solver --rtd 9 --throughput 3000
 minimize cars, minimize trains, minimize throughput >= 3000.0
 
 5 trains
@@ -66,7 +66,7 @@ full with 3200 items (32 stacks)
 
 Solve for optimal RtD and throughput.
 ```sh
-$ python3 -m sat_is_factory.train_solver --stack 500 --platform 1560
+$ train-solver --stack 500 --platform 1560
 minimize cars, minimize trains, minimize rtd, optimal
 
 1 train
