@@ -50,9 +50,13 @@ multi train/car setups.
 
 Depending on the input flags, the program will either:
 
-- Solve the optimal RtD and throughput, when neither are provided
+- Solve the optimal RTD and throughput, when neither are provided
 - Minimize the system while achieving a given throughput
-- Maximize the throughput for a given RtD
+- Maximize the throughput for a given RTD
+
+RTD is the Round Trip Duration for any one specific train. This is most easily
+measured by timing the duration of a train from "toot-to-toot". If there is
+congestion on the tracks, then an average should be used for closest results.
 
 It is impossible to achieve perfect platform efficiency due to the docking delay
 in the game, so don't expect to see (100% platform efficiency), this tool can
@@ -73,7 +77,7 @@ and doing so is up to you to implement correctly in-game. If the result calls
 for fully loaded trains, one method to achieve this to set the train to wait
 until it's fully loaded/unloaded AND 0 seconds. A more generic method, if the
 train is partially loaded, or carrying other items, is to set the train to wait
-until one load/unload AND `RtD / number of trains` (TODO: test this).
+until one load/unload AND `RTD / number of trains` (TODO: test this).
 
 For pipes, use --fluid, which sets the "stack" size appropriately to 50.
 """,
@@ -146,7 +150,7 @@ For pipes, use --fluid, which sets the "stack" size appropriately to 50.
 
     try:
         solver = TrainSolver(args)
-        print(f"Solving: {', '.join(solver.info)}")
+        print(", ".join(solver.info))
         print()
 
         solution = solver.solve()

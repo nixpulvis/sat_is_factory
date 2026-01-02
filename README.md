@@ -43,7 +43,8 @@ source .venv/bin/activate.fish
 
 ```
 usage: python3 -m sat_is_factory.train_solver [-h]
-  [--stack STACK] [--belt BELT] [--pipe [PIPE]]
+  [--stack STACK]
+  [--platform PLATFORM_RATE] [--fluid] [--input INPUT_RATE]
   [--trains TRAINS] [--max-trains MAX_TRAINS] [--cars CARS] [--max-cars MAX_CARS] [--minimize MINIMIZE]
   [--rtd RTD] [--throughput THROUGHPUT]
 ```
@@ -53,29 +54,29 @@ usage: python3 -m sat_is_factory.train_solver [-h]
 Solve for trains and cars needed given a fixed RtD and needed throughput.
 ```sh
 $ python3 -m sat_is_factory.train_solver --rtd 9 --throughput 3000
-
 minimize cars, minimize trains, minimize throughput >= 3000.0
-Stack Size: 100 items
-Belt Speed: 1200 items/min
-Trains: 5
-Cars: 2
-Loaded: full
-Round Trip Time: 9.0 min (540.0 sec)
-Throughput: 3555.5556 items/min (74.07%)
+
+5 trains
+2 cars
+full with 3200 items (32 stacks)
+9 min 0.0 sec per round trip.
+2400 items/min active platform rate
+3555.5556 items/min throughput (74.07% platform efficiency)
+1604.74 items in buffers, empties 36.68 sec after (un)load
 ```
 
 Solve for optimal RtD and throughput.
 ```sh
 $ python3 -m sat_is_factory.train_solver --stack 500 --belt 780
+minimize cars, minimize trains, minimize rtd, optimal
 
-minimize cars, minimize trains, minimize rtd, solving optimal
-Stack Size: 500 items
-Belt Speed: 780 items/min
-Trains: 1
-Cars: 1
-Loaded: full
-Round Trip Time: 10.7077 min (642.46 sec)
-Throughput: 1494.2457 items/min (95.78%)
+1 train
+1 car
+full with 16000 items (32 stacks)
+10 min 42.46 sec per round trip.
+1560 items/min active platform rate
+1494.2457 items/min throughput (95.78% platform efficiency)
+674.4 items in buffers, empties 10 min 15.38 sec after (un)load
 ```
 
 ### Testing
