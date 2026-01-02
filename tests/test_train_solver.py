@@ -7,7 +7,8 @@ from sat_is_factory.train_solver.train_solver import CAR_CAPACITY
 class TestArgs:
     def __init__(self, dict):
         self.stack = None
-        self.input_rate = None
+        self.source_rate = None
+        self.sink_rate = None
         self.platform_rate = None
         self.trains = None
         self.max_trains = None

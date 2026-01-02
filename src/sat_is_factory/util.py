@@ -21,8 +21,13 @@ def fmt_time(minutes):
 
 
 # Super incomplete for all of English, but enough for now.
-def pluralize(name, count):
+def pluralize(name, count, name_only=False):
     if count == 1:
-        return f"{count} {name}"
+        pluralization = f"{name}"
     else:
-        return f"{count} {name}s"
+        pluralization = f"{name}s"
+
+    if name_only:
+        return pluralization
+    else:
+        return f"{count} {pluralization}"

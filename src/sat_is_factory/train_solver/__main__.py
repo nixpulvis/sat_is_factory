@@ -19,9 +19,17 @@ RTD is the Round Trip Duration for any one specific train. This is most easily
 measured by timing the duration of a train from "toot-to-toot". If there is
 congestion on the tracks, then an average should be used for closest results.
 
+The source argument allows directly calculating an available output rate as well
+as source platform(s) buffer information. The sink option further allows
+ensuring a final consistent rate to downstream consumers of the unloading
+platform(s). These calculations assume each platform has the same platform rate
+and that the source and sink are properly balanced. Balancing train stations is
+sometimes needed to achieve maximum throughput when using the wait until fully
+loaded/unloaded option in game.
+
 It is impossible to achieve perfect platform efficiency due to the docking delay
 in the game, so don't expect to see (100% platform efficiency), this tool can
-help you achieve 100% of input throughput however.
+help you achieve 100% of source throughput however.
 
 Take note of the default values, which assume common stack sizes of 100 and
 maximum platform speeds of 2,400 items/min (or 1,200 m^3/min for fluids). There
@@ -76,12 +84,6 @@ def get_arguments():
         action="store_true",
         help="Using fluids (sets --stack to 50)",
     )
-    constants.add_argument(
-        "--input",
-        type=float,
-        dest="input_rate",
-        help="Input rate (TODO: split between platforms)",
-    )
 
     train = parser.add_argument_group("train constraints")
     train.add_argument(
@@ -105,21 +107,41 @@ def get_arguments():
 
     route = parser.add_argument_group("route constraints")
     route.add_argument(
-        "--rtd", type=time, help="Round trip duration, otherwise optimized for"
+        "--rtd", type=time, help="Round trip duration, otherwise minimized"
     )
-    route.add_argument("--throughput", type=float, help="Minimum throughput")
+    route.add_argument(
+        "--throughput", type=float, help="Minimum throughput, otherise maximized"
+    )
+
+    io = parser.add_argument_group("source and sink values")
+    io.add_argument(
+        "--input",
+        "--source",
+        type=float,
+        dest="source_rate",
+        help="Source input rate",
+    )
+    io.add_argument(
+        "--sink",
+        type=float,
+        dest="sink_rate",
+        help="Output sink rate",
+    )
 
     args = parser.parse_args()
-    set_additional_defaults(args)
+    if args.sink_rate is not None and args.source_rate is None:
+        parser.error("--source is required when --sink is provided")
+
+    set_additional_defaults(parser, args)
     return args
 
 
-def set_additional_defaults(args):
+def set_additional_defaults(parser, args):
     if args.fluid:
         if args.stack == STACK_SENTINAL:
             args.stack = 1600 / CAR_CAPACITY
         else:
-            raise ValueError("cannot use --stack with --fluid")
+            parser.error("cannot use --stack with --fluid")
         if args.platform_rate == PLATFORM_SENTINAL:
             args.platform_rate = 1200
     else:
@@ -139,7 +161,11 @@ def main():
 
         solution = solver.solve()
         if solution is not None:
-            print_solution(solution, args.fluid, args.input_rate is not None)
+            if args.fluid:
+                unit = "m^3"
+            else:
+                unit = "items"
+            print_solution(solution, unit)
         else:
             print("No solution found.")
 
@@ -147,15 +173,11 @@ def main():
         print(f"Error: {e}")
 
 
-def print_solution(solution, is_fluid, has_input_rate):
-    if is_fluid:
-        unit = "m^3"
-    else:
-        unit = "items"
-
+def print_solution(solution, unit):
     print_train_solution(solution, unit)
     print_station_solution(solution, unit)
-    if has_input_rate:
+    if "source" in solution or "sink" in solution:
+        print()
         print_io_solution(solution, unit)
 
 
@@ -168,8 +190,16 @@ def print_train_solution(solution, unit):
     print(pluralize("car", solution["cars"]))
     stacks = math.ceil(solution["loaded"] / solution["stack"])
     print(
-        f"{loaded_kind} with {round(solution['loaded'])} {unit} ({pluralize('stack', stacks)})"
+        f"{loaded_kind} with {round(solution['loaded'])} {unit} ({pluralize('stack', stacks)})",
+        end="",
     )
+    if (
+        "source" in solution
+        and "sink" in solution
+        and solution["source"]["rate"] > solution["sink"]["rate"]
+    ):
+        print(", not fully unloaded", end="")
+    print()
     print(f"{fmt_time(solution['rtd'])} per round trip.")
 
 
@@ -184,22 +214,32 @@ def print_station_solution(solution, unit):
 
 
 def print_io_solution(solution, unit):
-    print(f"{round(solution['input_rate'], 4)} {unit}/min input rate")
-    ratio = solution["output_rate"] / solution["input_rate"] * 100
-    print(
-        f"{round(solution['output_rate'], 4)} {unit}/min output rate ({round(ratio, 2)}% of input)"
-    )
+    def print_buffer_solution(key, solution, unit):
+        buffer_size = math.ceil(solution[key]["buffer"]["size"])
+        buffer_time = fmt_time(solution[key]["buffer"]["time"])
+        if key == "source":
+            verb = "empties"
+            action = "load"
+        else:
+            verb = "fills"
+            action = "unload"
+        buffer = pluralize(f"{key} buffer", solution["cars"], name_only=True)
+        print(f"{buffer_size} {unit} in {buffer}, {verb} {buffer_time} after {action}")
 
-    if solution["input_buffer"] == solution["output_buffer"]:
-        buffer_label = "buffers"
-    else:
-        print("input buffer would be saturated and useless")
-        buffer_label = "output buffer"
-    buffer_size = round(solution["output_buffer"]["size"], 2)
-    buffer_time = fmt_time(solution["output_buffer"]["time"])
-    print(
-        f"{buffer_size} {unit} in {buffer_label}, empties {buffer_time} after (un)load"
-    )
+    if "source" in solution:
+        print(f"{round(solution['source']['rate'], 4)} {unit}/min source rate")
+        if (
+            "sink" in solution
+            and solution["source"]["rate"] <= solution["sink"]["rate"]
+        ):
+            print_buffer_solution("source", solution, unit)
+        ratio = solution["available_rate"] / solution["source"]["rate"] * 100
+        print(
+            f"{round(solution['available_rate'], 4)} {unit}/min available output rate ({round(ratio, 2)}% of source)"
+        )
+    if "sink" in solution:
+        print(f"{round(solution['sink']['rate'], 4)} {unit}/min sink rate")
+        print_buffer_solution("sink", solution, unit)
 
 
 if __name__ == "__main__":
