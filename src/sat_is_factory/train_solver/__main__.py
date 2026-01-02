@@ -174,6 +174,7 @@ For pipes, use --fluid, which sets the "stack" size appropriately to 50.
 
             if args.input_rate:
                 print(f"{solution['input_rate']} {unit}/min input rate")
+
             print(f"{solution['platform_rate']} {unit}/min active platform rate")
             efficiency = (
                 solution["throughput"]
@@ -184,24 +185,23 @@ For pipes, use --fluid, which sets the "stack" size appropriately to 50.
             print(
                 f"{round(solution['throughput'], 4)} {unit}/min throughput ({round(efficiency, 2)}% platform efficiency)"
             )
+
             if args.input_rate:
                 ratio = solution["output_rate"] / solution["input_rate"] * 100
                 print(
                     f"{round(solution['output_rate'], 4)} {unit}/min output rate ({round(ratio, 2)}% of input)"
                 )
 
-            # If the input buffer isn't the same as the output buffer, the input
-            # rate must be larger than the throughput and it will be useless.
-            if solution["input_buffer"] == solution["output_buffer"]:
-                buffer_label = "buffers"
-            else:
-                print("input buffer would be saturated and useless")
-                buffer_label = "output buffer"
-            buffer_size = round(solution["output_buffer"]["size"], 2)
-            buffer_time = fmt_time(solution["output_buffer"]["time"])
-            print(
-                f"{buffer_size} {unit} in {buffer_label}, empties {buffer_time} after (un)load"
-            )
+                if solution["input_buffer"] == solution["output_buffer"]:
+                    buffer_label = "buffers"
+                else:
+                    print("input buffer would be saturated and useless")
+                    buffer_label = "output buffer"
+                buffer_size = round(solution["output_buffer"]["size"], 2)
+                buffer_time = fmt_time(solution["output_buffer"]["time"])
+                print(
+                    f"{buffer_size} {unit} in {buffer_label}, empties {buffer_time} after (un)load"
+                )
         else:
             print("No solution found.")
 

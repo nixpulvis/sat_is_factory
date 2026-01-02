@@ -62,7 +62,6 @@ full with 3200 items (32 stacks)
 9 min 0.0 sec per round trip.
 2400 items/min active platform rate
 3555.5556 items/min throughput (74.07% platform efficiency)
-1604.74 items in buffers, empties 36.68 sec after (un)load
 ```
 
 Solve for optimal RtD and throughput.
@@ -76,7 +75,6 @@ full with 16000 items (32 stacks)
 10 min 42.46 sec per round trip.
 1560 items/min active platform rate
 1494.2457 items/min throughput (95.78% platform efficiency)
-674.4 items in buffers, empties 10 min 15.38 sec after (un)load
 ```
 
 ### Testing
