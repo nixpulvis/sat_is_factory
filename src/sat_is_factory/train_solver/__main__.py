@@ -198,7 +198,7 @@ def print_train_solution(solution, unit):
     if (
         "source" in solution
         and "sink" in solution
-        and solution["source"]["rate"] > solution["sink"]["rate"]
+        and solution["fill_rate"] > solution["drain_rate"]
     ):
         print(", not fully unloaded", end="")
     print()
