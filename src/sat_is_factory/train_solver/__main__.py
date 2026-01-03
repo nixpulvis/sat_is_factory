@@ -2,7 +2,7 @@ import argparse
 import math
 
 from sat_is_factory.train_solver import TrainSolver
-from sat_is_factory.train_solver.train_solver import CAR_CAPACITY, DOCK_DURATION
+from sat_is_factory.train_solver.train_solver import CAR_CAPACITY
 from sat_is_factory.util import fmt_time, pluralize, time
 
 HELP = """
@@ -12,19 +12,29 @@ multiple train/car setups.
 Depending on the input flags, the program will either:
 
 - Solve the optimal RTD and throughput, when neither are provided
-- Minimize the system while achieving a given throughput
-- Maximize the throughput for a given RTD
+- Minimize the system while achieving a given --throughput
+- Maximize the throughput for a given --rtd
 
-RTD is the Round Trip Duration for any one specific train. This is most easily
-measured by timing the duration of a train from "toot-to-toot". If there is
-congestion on the tracks, then an average should be used for closest results.
+Throughput (--given by --throughput) is the total amount a train system can
+handle with all trains and cars in the system. This value may be larger than the
+given --source and --sink values if specified.
 
-The source argument allows calculating source platform(s) buffer information.
-The sink option further allows ensuring a final consistent rate to downstream
-consumers of the unloading platform(s). These calculations assume each platform
-has the same platform rate and that the source and sink are properly balanced.
-Balancing train stations is sometimes needed to achieve maximum throughput when
-using the wait until fully loaded/unloaded option in game.
+RTD (given by --rtd) is the Round Trip Duration for any one specific train. This
+is most easily measured by timing the duration of a train from "toot-to-toot".
+If there is congestion on the tracks, then an average should be used for closest
+results.
+
+The platform rate (given by --platform) is the total input/output rate for a
+single platform. This is usually 2x the speed of whatever kind of belt/pipe you
+have connected to it.
+
+The --source argument allows calculating source platform(s) buffer information.
+The --sink option further allows ensuring a final consistent rate to downstream
+consumers of the unloading platform(s). If you pass just --sink, it will set
+--source to be equal. These calculations assume each platform has the same
+platform rate and that the source and sink are properly balanced. Balancing
+train stations is sometimes needed to achieve maximum throughput when using the
+wait until fully loaded/unloaded option in game.
 
 It is impossible to achieve perfect platform efficiency due to the docking delay
 in the game, so don't expect to see (100% platform efficiency), this tool can
@@ -51,8 +61,30 @@ For pipes, use --fluid, which sets the "stack" size appropriately to 50.
 """
 
 
-STACK_SENTINAL = object()
-PLATFORM_SENTINAL = object()
+class StackSentinal:
+    def items(self):
+        return 100
+
+    def fluids(self):
+        return 1600 / CAR_CAPACITY
+
+    def __str__(self):
+        return str(self.items())
+
+
+class PlatformSentinal:
+    def item_rate(self):
+        return 2400
+
+    def fluid_rate(self):
+        return 1200
+
+    def __str__(self):
+        return f"{self.item_rate()} items/min or {self.fluid_rate()} m^3/min"
+
+
+STACK_SENTINAL = StackSentinal()
+PLATFORM_SENTINAL = PlatformSentinal()
 
 
 class Formatter(
@@ -76,24 +108,22 @@ def get_arguments():
         type=int,
         dest="platform_rate",
         default=PLATFORM_SENTINAL,
-        help="Platform loading speed (sum of belt/pipe speeds)",
+        help="Platform loading speed",
     )
     constants.add_argument(
         "--fluid",
         action="store_true",
-        help="Using fluids (sets --stack to 50)",
+        help="Using fluids",
     )
 
     train = parser.add_argument_group("train constraints")
     train.add_argument(
-        "--trains", type=int, help="Number of trains, otherwise optimized for"
+        "--trains", type=int, help="Number of trains, otherwise minimized"
     )
     train.add_argument(
         "--max-trains", type=int, default=10, help="Maximum number of trains"
     )
-    train.add_argument(
-        "--cars", type=int, help="Number of cars, otherwise optimized for"
-    )
+    train.add_argument("--cars", type=int, help="Number of cars, otherwise minimized")
     train.add_argument(
         "--max-cars", type=int, default=10, help="Maximum number of cars"
     )
@@ -141,16 +171,16 @@ def set_io_defaults(args):
 def set_additional_defaults(parser, args):
     if args.fluid:
         if args.stack == STACK_SENTINAL:
-            args.stack = 1600 / CAR_CAPACITY
+            args.stack = STACK_SENTINAL.fluids()
         else:
             parser.error("cannot use --stack with --fluid")
         if args.platform_rate == PLATFORM_SENTINAL:
-            args.platform_rate = 1200
+            args.platform_rate = PLATFORM_SENTINAL.fluid_rate()
     else:
         if args.stack == STACK_SENTINAL:
-            args.stack = 100
+            args.stack = STACK_SENTINAL.items()
         if args.platform_rate == PLATFORM_SENTINAL:
-            args.platform_rate = 2400
+            args.platform_rate = PLATFORM_SENTINAL.item_rate()
 
 
 def main():
@@ -192,15 +222,17 @@ def print_train_solution(solution, unit):
     print(pluralize("car", solution["cars"]))
     stacks = math.ceil(solution["loaded"] / solution["stack"])
     print(
-        f"{loaded_kind} with {round(solution['loaded'])} {unit} ({pluralize('stack', stacks)})",
+        f"{loaded_kind} with {round(solution['loaded'])} {unit}",
         end="",
     )
+    if unit == "items":
+        print(f" in {pluralize('stack', stacks)}", end="")
     if (
         "source" in solution
         and "sink" in solution
         and solution["fill_rate"] > solution["drain_rate"]
     ):
-        print(", not fully unloaded", end="")
+        print(" (eventually filled)", end="")
     print()
     print(f"{fmt_time(solution['rtd'])} per round trip.")
 

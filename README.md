@@ -45,11 +45,12 @@ source .venv/bin/activate.fish
 ### Usage
 
 ```
-usage: python3 -m sat_is_factory.train_solver [-h]
+usage: train-solver [-h]
   [--stack STACK]
-  [--platform PLATFORM_RATE] [--fluid] [--input INPUT_RATE]
+  [--platform PLATFORM_RATE] [--fluid]
   [--trains TRAINS] [--max-trains MAX_TRAINS] [--cars CARS] [--max-cars MAX_CARS] [--minimize MINIMIZE]
   [--rtd RTD] [--throughput THROUGHPUT]
+  [--source SOURCE_RATE] [--sink SINK_RATE]
 ```
 
 ### Examples
