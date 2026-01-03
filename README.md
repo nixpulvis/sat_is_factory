@@ -83,19 +83,20 @@ full with 16000 items (32 stacks)
 Solve with source and sink rates.
 ```sh
 $ train-solver --platform 960 --source 800 --sink 600 --rtd 5
-minimize cars, minimize trains, minimize throughput >= 600.0
+minimize cars, minimize trains, minimize throughput >= 800.0
 
 1 train
-1 car
-full with 3200 items (32 stacks), not fully unloaded
+2 cars
+partially filled with 2000 items (20 stacks), not fully unloaded
 5 min 0.0 sec per round trip.
 960 items/min active platform rate
-640.0 items/min throughput (66.67% platform efficiency)
+1280.0 items/min throughput (66.67% platform efficiency)
 
-800.0 items/min source rate
-640.0 items/min available output rate (80.0% of source)
-600.0 items/min sink rate
-271 items in sink buffer, fills 45.13 sec after unload
+800.0 items/min source rate (62.5% of throughput)
+source buffer would eventually be full
+800.0 items/min available
+600.0 items/min sink rate (75.0% of available)
+136 items in sink buffers fills after 12.31 sec
 ```
 
 ### Testing

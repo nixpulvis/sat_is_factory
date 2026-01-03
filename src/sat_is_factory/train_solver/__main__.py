@@ -2,12 +2,12 @@ import argparse
 import math
 
 from sat_is_factory.train_solver import TrainSolver
-from sat_is_factory.train_solver.train_solver import CAR_CAPACITY
+from sat_is_factory.train_solver.train_solver import CAR_CAPACITY, DOCK_DURATION
 from sat_is_factory.util import fmt_time, pluralize, time
 
 HELP = """
 This program can be used to solve the train throughput equations for single or
-multi train/car setups.
+multiple train/car setups.
 
 Depending on the input flags, the program will either:
 
@@ -19,13 +19,12 @@ RTD is the Round Trip Duration for any one specific train. This is most easily
 measured by timing the duration of a train from "toot-to-toot". If there is
 congestion on the tracks, then an average should be used for closest results.
 
-The source argument allows directly calculating an available output rate as well
-as source platform(s) buffer information. The sink option further allows
-ensuring a final consistent rate to downstream consumers of the unloading
-platform(s). These calculations assume each platform has the same platform rate
-and that the source and sink are properly balanced. Balancing train stations is
-sometimes needed to achieve maximum throughput when using the wait until fully
-loaded/unloaded option in game.
+The source argument allows calculating source platform(s) buffer information.
+The sink option further allows ensuring a final consistent rate to downstream
+consumers of the unloading platform(s). These calculations assume each platform
+has the same platform rate and that the source and sink are properly balanced.
+Balancing train stations is sometimes needed to achieve maximum throughput when
+using the wait until fully loaded/unloaded option in game.
 
 It is impossible to achieve perfect platform efficiency due to the docking delay
 in the game, so don't expect to see (100% platform efficiency), this tool can
@@ -129,11 +128,14 @@ def get_arguments():
     )
 
     args = parser.parse_args()
-    if args.sink_rate is not None and args.source_rate is None:
-        parser.error("--source is required when --sink is provided")
-
+    set_io_defaults(args)
     set_additional_defaults(parser, args)
     return args
+
+
+def set_io_defaults(args):
+    if args.sink_rate is not None and args.source_rate is None:
+        args.source_rate = args.sink_rate
 
 
 def set_additional_defaults(parser, args):
@@ -209,37 +211,49 @@ def print_station_solution(solution, unit):
         solution["throughput"] / solution["platform_rate"] / solution["cars"] * 100
     )
     print(
-        f"{round(solution['throughput'], 4)} {unit}/min throughput ({round(efficiency, 2)}% platform efficiency)"
+        f"{round(solution['throughput'], 2)} {unit}/min throughput ({round(efficiency, 2)}% platform efficiency)"
     )
 
 
 def print_io_solution(solution, unit):
-    def print_buffer_solution(key, solution, unit):
-        buffer_size = math.ceil(solution[key]["buffer"]["size"])
-        buffer_time = fmt_time(solution[key]["buffer"]["time"])
-        if key == "source":
-            verb = "empties"
-            action = "load"
-        else:
-            verb = "fills"
-            action = "unload"
-        buffer = pluralize(f"{key} buffer", solution["cars"], name_only=True)
-        print(f"{buffer_size} {unit} in {buffer}, {verb} {buffer_time} after {action}")
+    plural_buffer = pluralize("buffer", solution["cars"], name_only=True)
 
     if "source" in solution:
-        print(f"{round(solution['source']['rate'], 4)} {unit}/min source rate")
-        if (
-            "sink" in solution
-            and solution["source"]["rate"] <= solution["sink"]["rate"]
-        ):
-            print_buffer_solution("source", solution, unit)
-        ratio = solution["available_rate"] / solution["source"]["rate"] * 100
+        source_ratio = solution["source"]["rate"] / solution["throughput"] * 100
+        source_ratio_msg = f"{round(source_ratio, 2)}% of throughput"
         print(
-            f"{round(solution['available_rate'], 4)} {unit}/min available output rate ({round(ratio, 2)}% of source)"
+            f"{round(solution['source']['rate'], 2)} {unit}/min source rate ({source_ratio_msg})"
         )
+        if "drain_rate" in solution:
+            full = solution["fill_rate"] > solution["drain_rate"]
+        else:
+            full = solution["fill_rate"] > solution["throughput"]
+        if not full:
+            source_buffer_size = math.ceil(solution["source"]["buffer"]["size"])
+            source_buffer_time = fmt_time(solution["source"]["buffer"]["time"])
+            print(
+                f"{source_buffer_size} {unit} in source {plural_buffer} empties after {source_buffer_time}"
+            )
+        else:
+            print("source buffer would eventually be full")
+
+    print(f"{round(solution['fill_rate'], 2)} {unit}/min available")
+
     if "sink" in solution:
-        print(f"{round(solution['sink']['rate'], 4)} {unit}/min sink rate")
-        print_buffer_solution("sink", solution, unit)
+        sink_ratio = solution["sink"]["rate"] / solution["fill_rate"] * 100
+        sink_ratio_msg = f"{round(sink_ratio, 2)}% of available"
+        print(
+            f"{round(solution['sink']['rate'], 2)} {unit}/min sink rate ({sink_ratio_msg})"
+        )
+        empty = solution["drain_rate"] > solution["fill_rate"]
+        if not empty:
+            sink_buffer_size = math.ceil(solution["sink"]["buffer"]["size"])
+            sink_buffer_time = fmt_time(solution["sink"]["buffer"]["time"])
+            print(
+                f"{sink_buffer_size} {unit} in sink {plural_buffer} fills after {sink_buffer_time}"
+            )
+        else:
+            print("sink buffer would eventually be empty")
 
 
 if __name__ == "__main__":

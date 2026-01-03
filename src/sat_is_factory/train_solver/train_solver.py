@@ -44,9 +44,9 @@ class TrainSolver:
 
     def setup_io(self):
         self.source_rate = Real("source_rate")
-        self.available_rate = Real("available_rate")
+        self.fill_rate = Real("fill_rate")
 
-        self.available_rate = Min(self.throughput, self.source_rate)
+        self.fill_rate = Min(self.source_rate, self.throughput)
 
         self.source_buffer_size = DOCK_DURATION * self.source_rate / self.cars
         self.source_buffer_time = self.source_buffer_size / (
@@ -55,6 +55,9 @@ class TrainSolver:
 
         if self.args.sink_rate is not None:
             self.sink_rate = Real("sink_rate")
+            self.drain_rate = Real("drain_rate")
+
+            self.drain_rate = Min(self.sink_rate, self.throughput)
 
             self.sink_buffer_size = DOCK_DURATION * self.sink_rate / self.cars
             self.sink_buffer_time = self.sink_buffer_size / (
@@ -143,15 +146,15 @@ class TrainSolver:
             self.info.append(f"minimize throughput >= {self.args.throughput}")
             self.opt.add(self.throughput >= self.args.throughput)
             self.opt.minimize(self.throughput)
-        # Otherwise we try to solve for the given sink rate.
-        elif self.args.sink_rate is not None:
-            self.info.append(f"minimize throughput >= {self.args.sink_rate}")
-            self.opt.add(self.throughput >= self.args.sink_rate)
-            self.opt.minimize(self.throughput)
         # Otherwise we try to solve for the given source rate.
         elif self.args.source_rate is not None:
             self.info.append(f"minimize throughput >= {self.args.source_rate}")
             self.opt.add(self.throughput >= self.args.source_rate)
+            self.opt.minimize(self.throughput)
+        # Otherwise we try to solve for the given sink rate.
+        elif self.args.sink_rate is not None:
+            self.info.append(f"minimize throughput >= {self.args.sink_rate}")
+            self.opt.add(self.throughput >= self.args.sink_rate)
             self.opt.minimize(self.throughput)
         # If neither are given, but we have a round trip time, we find the
         # maximum value.
@@ -202,7 +205,7 @@ class TrainSolver:
                             "time": z3_to_python(self.source_buffer_time),
                         },
                     },
-                    "available_rate": z3_to_python(self.available_rate),
+                    "fill_rate": z3_to_python(self.fill_rate),
                 }
             if self.args.sink_rate is not None:
                 solution |= {
@@ -213,6 +216,7 @@ class TrainSolver:
                             "time": z3_to_python(self.sink_buffer_time),
                         },
                     },
+                    "drain_rate": z3_to_python(self.drain_rate),
                 }
 
             return solution
