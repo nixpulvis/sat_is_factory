@@ -158,8 +158,21 @@ def get_arguments():
     )
 
     args = parser.parse_args()
+
     set_io_defaults(args)
     set_additional_defaults(parser, args)
+
+    if args.source_rate is not None:
+        if args.source_rate == 0:
+            parser.error("--source cannot be 0")
+        elif args.source_rate < 0:
+            parser.error("--source cannot be negative")
+    if args.sink_rate is not None:
+        if args.sink_rate == 0:
+            parser.error("--sink cannot be 0")
+        elif args.sink_rate < 0:
+            parser.error("--sink cannot be negative")
+
     return args
 
 
@@ -259,9 +272,9 @@ def print_io_solution(solution, unit):
             f"{round(solution['source']['rate'], 2)} {unit}/min source rate ({source_ratio_msg})"
         )
         if "drain_rate" in solution:
-            full = solution["fill_rate"] > solution["drain_rate"]
+            full = solution["source"]["rate"] > solution["drain_rate"]
         else:
-            full = solution["fill_rate"] > solution["throughput"]
+            full = solution["source"]["rate"] > solution["throughput"]
         if not full:
             source_buffer_size = math.ceil(solution["source"]["buffer"]["size"])
             source_buffer_time = fmt_time(solution["source"]["buffer"]["time"])
@@ -269,7 +282,7 @@ def print_io_solution(solution, unit):
                 f"{source_buffer_size} {unit} in source {plural_buffer} empties after {source_buffer_time}"
             )
         else:
-            print("source buffer would eventually be full")
+            print("source buffer would be full")
 
     print(f"{round(solution['fill_rate'], 2)} {unit}/min available")
 
@@ -279,7 +292,7 @@ def print_io_solution(solution, unit):
         print(
             f"{round(solution['sink']['rate'], 2)} {unit}/min sink rate ({sink_ratio_msg})"
         )
-        empty = solution["drain_rate"] > solution["fill_rate"]
+        empty = solution["sink"]["rate"] > solution["fill_rate"]
         if not empty:
             sink_buffer_size = math.ceil(solution["sink"]["buffer"]["size"])
             sink_buffer_time = fmt_time(solution["sink"]["buffer"]["time"])
@@ -287,7 +300,7 @@ def print_io_solution(solution, unit):
                 f"{sink_buffer_size} {unit} in sink {plural_buffer} fills after {sink_buffer_time}"
             )
         else:
-            print("sink buffer would eventually be empty")
+            print("sink buffer would be empty")
 
 
 if __name__ == "__main__":
