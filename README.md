@@ -63,7 +63,7 @@ minimize cars, minimize trains, minimize throughput >= 3000.0
 2 cars
 full with 3200 items (32 stacks)
 9 min 0.0 sec per round trip.
-2400 items/min active platform rate
+4800 items/min total active rate of platforms
 3555.5556 items/min throughput (74.07% platform efficiency)
 ```
 
@@ -76,7 +76,7 @@ minimize cars, minimize trains, minimize rtd, optimal
 1 car
 full with 16000 items (32 stacks)
 10 min 42.46 sec per round trip.
-1560 items/min active platform rate
+1560 items/min total active rate of platform
 1494.2457 items/min throughput (95.78% platform efficiency)
 ```
 
@@ -89,7 +89,7 @@ minimize cars, minimize trains, minimize throughput >= 800.0
 2 cars
 partially filled with 2000 items (20 stacks), not fully unloaded
 5 min 0.0 sec per round trip.
-960 items/min active platform rate
+1920 items/min total active rate of platforms
 1280.0 items/min throughput (66.67% platform efficiency)
 
 800.0 items/min source rate (62.5% of throughput)

@@ -206,7 +206,9 @@ def print_train_solution(solution, unit):
 
 
 def print_station_solution(solution, unit):
-    print(f"{solution['platform_rate']} {unit}/min active platform rate")
+    total_rate = solution["platform_rate"] * solution["cars"]
+    plural_platform = pluralize("platform", solution["cars"], name_only=True)
+    print(f"{total_rate} {unit}/min total active rate of {plural_platform}")
     efficiency = (
         solution["throughput"] / solution["platform_rate"] / solution["cars"] * 100
     )
