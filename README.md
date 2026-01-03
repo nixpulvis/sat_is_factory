@@ -88,13 +88,13 @@ minimize cars, minimize trains, minimize throughput >= 800.0
 
 1 train
 2 cars
-partially filled with 2000 items (20 stacks), not fully unloaded
+partially filled with 2000 items in 20 stacks (eventually filled)
 5 min 0.0 sec per round trip.
 1920 items/min total active rate of platforms
 1280.0 items/min throughput (66.67% platform efficiency)
 
 800.0 items/min source rate (62.5% of throughput)
-source buffer would eventually be full
+source buffer would be full
 800.0 items/min available
 600.0 items/min sink rate (75.0% of available)
 136 items in sink buffers fills after 12.31 sec

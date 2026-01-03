@@ -78,6 +78,7 @@ class TrainSolver:
             else:
                 raise ValueError("invalid rtd")
         else:
+            # TODO: IDK why Z3 still returns -inf for RTD when it's not given.
             self.opt.add(self.rtd >= DOCK_DURATION)
 
         self.opt.add(self.trains > 0)
