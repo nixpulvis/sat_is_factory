@@ -5,7 +5,7 @@ SAT solving for Satisfactory.
 Using Python with [`z3-solver`](https://pypi.org/project/z3-solver/) for
 [Z3](https://github.com/Z3Prover/z3).
 
-## `train_solver`
+## `train-solver`
 
 Consistent with https://satisfactory.wiki.gg/wiki/Tutorial:Train_throughput, but
 works with multiple trains and cars. See [the unit
