@@ -9,6 +9,19 @@ ABSOLUTE_MAX_TRAINS = 50
 ABSOLUTE_MAX_CARS = 50
 
 
+class Buffer:
+    def __init__(self, external_rate, cars, platform_rate):
+        self.size = DOCK_DURATION * external_rate / cars
+        self.time = self.size / (platform_rate - external_rate / cars)
+
+
+class Io:
+    def __init__(self, kind, ratio_rate, cars, platform_rate):
+        self.rate = Real(f"{kind}_rate")
+        self.ratio = self.rate / ratio_rate
+        self.buffer = Buffer(self.rate, cars, platform_rate)
+
+
 class Solver:
     def __init__(self, args):
         self.args = args
@@ -17,12 +30,16 @@ class Solver:
 
     def setup(self):
         self.stack_size = Int("stack_size")
-        self.platform_rate = Int("platform_rate")
+
         self.trains = Int("trains")
         self.cars = Int("cars")
+
+        self.platform_rate = Int("platform_rate")
+        self.station_rate = self.platform_rate * self.cars
+
         self.rtd = Real("rtd")
 
-        # Train equation
+        # Train equations
         self.partial = (
             self.platform_rate
             * self.cars
@@ -31,45 +48,27 @@ class Solver:
         )
         self.full = CAR_CAPACITY * self.stack_size * self.trains * self.cars / self.rtd
         self.throughput = Min(self.partial, self.full)
+        self.efficiency = self.throughput / self.platform_rate / self.cars * 100
+
+        def loaded(fill_rate):
+            return
 
         if self.args.source_rate is None:
-            self.loaded = self.throughput * self.rtd / (self.trains * self.cars)  # pyright: ignore[reportOperatorIssue]
+            self.fill_rate = self.drain_rate = self.throughput
         else:
-            self.setup_io()
-            self.loaded = (  # pyright: ignore[reportOperatorIssue]
-                Min(self.throughput, self.source_rate)
-                * self.rtd
-                / (self.trains * self.cars)
-            )
+            self.source = Io("source", self.throughput, self.cars, self.platform_rate)
+            self.fill_rate = Min(self.source.rate, self.throughput)
+            self.sink = Io("sink", self.fill_rate, self.cars, self.platform_rate)
+            self.drain_rate = Min(self.sink.rate, self.throughput)
 
-    def setup_io(self):
-        self.source_rate = Real("source_rate")
-        self.fill_rate = Real("fill_rate")
-
-        self.fill_rate = Min(self.source_rate, self.throughput)
-
-        self.source_buffer_size = DOCK_DURATION * self.source_rate / self.cars
-        self.source_buffer_time = self.source_buffer_size / (
-            self.platform_rate - self.source_rate / self.cars
-        )
-
-        if self.args.sink_rate is not None:
-            self.sink_rate = Real("sink_rate")
-            self.drain_rate = Real("drain_rate")
-
-            self.drain_rate = Min(self.sink_rate, self.throughput)
-
-            self.sink_buffer_size = DOCK_DURATION * self.sink_rate / self.cars
-            self.sink_buffer_time = self.sink_buffer_size / (
-                self.platform_rate - self.sink_rate / self.cars
-            )
+        self.loaded = self.fill_rate * self.rtd / (self.trains * self.cars)  # pyright: ignore[reportOperatorIssue]
 
     def optimize(self):
         self.opt = Optimize()
         self.optimize_train()
         self.optimize_station()
-        if self.args.source_rate:
-            self.optimize_io()
+        if self.args.source_rate or self.args.sink_rate:
+            self.optimize_source_sink()
 
     def optimize_train(self):
         if self.args.rtd is not None:
@@ -163,10 +162,10 @@ class Solver:
             self.info.append("maximizing throughput")
             self.opt.maximize(self.throughput)
 
-    def optimize_io(self):
-        self.opt.add(self.source_rate == self.args.source_rate)
+    def optimize_source_sink(self):
+        self.opt.add(self.source.rate == self.args.source_rate)
         if self.args.sink_rate is not None:
-            self.opt.add(self.sink_rate == self.args.sink_rate)
+            self.opt.add(self.sink.rate == self.args.sink_rate)
 
     def solve(self):
         if self.opt.check() == sat:
@@ -189,21 +188,24 @@ class Solver:
             solution = {
                 "info": self.info,
                 "stack_size": z3_to_python(self.stack_size),
-                "platform_rate": z3_to_python(self.platform_rate),
                 "trains": z3_to_python(self.trains),
                 "cars": z3_to_python(self.cars),
+                "platform_rate": z3_to_python(self.platform_rate),
+                "station_rate": z3_to_python(self.station_rate),
                 "loaded": z3_to_python(self.loaded),
                 "rtd": z3_to_python(self.rtd),
                 "throughput": z3_to_python(self.throughput),
+                "efficiency": z3_to_python(self.efficiency),
             }
 
             if self.args.source_rate is not None:
                 solution |= {
                     "source": {
-                        "rate": z3_to_python(self.source_rate),
+                        "rate": z3_to_python(self.source.rate),
+                        "ratio": z3_to_python(self.source.ratio),
                         "buffer": {
-                            "size": z3_to_python(self.source_buffer_size),
-                            "time": z3_to_python(self.source_buffer_time),
+                            "size": z3_to_python(self.source.buffer.size),
+                            "time": z3_to_python(self.source.buffer.time),
                         },
                     },
                     "fill_rate": z3_to_python(self.fill_rate),
@@ -211,10 +213,11 @@ class Solver:
             if self.args.sink_rate is not None:
                 solution |= {
                     "sink": {
-                        "rate": z3_to_python(self.sink_rate),
+                        "rate": z3_to_python(self.sink.rate),
+                        "ratio": z3_to_python(self.sink.ratio),
                         "buffer": {
-                            "size": z3_to_python(self.sink_buffer_size),
-                            "time": z3_to_python(self.sink_buffer_time),
+                            "size": z3_to_python(self.sink.buffer.size),
+                            "time": z3_to_python(self.sink.buffer.time),
                         },
                     },
                     "drain_rate": z3_to_python(self.drain_rate),

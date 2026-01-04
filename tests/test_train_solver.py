@@ -6,7 +6,7 @@ from sat_is_factory.train_solver.train_solver import CAR_CAPACITY
 
 class TestArgs:
     def __init__(self, dict):
-        self.stack = None
+        self.stack_size = None
         self.source_rate = None
         self.sink_rate = None
         self.platform_rate = None
@@ -27,7 +27,7 @@ class TestOptimal(unittest.TestCase):
         solver = Solver(
             TestArgs(
                 {
-                    "stack": 100,
+                    "stack_size": 100,
                     "platform_rate": 2400,
                     "trains": 1,
                     "cars": 1,
@@ -45,7 +45,7 @@ class TestOptimal(unittest.TestCase):
         solver = Solver(
             TestArgs(
                 {
-                    "stack": 100,
+                    "stack_size": 100,
                     "platform_rate": 2400,
                     "trains": 2,
                     "cars": 1,
@@ -62,7 +62,7 @@ class TestOptimal(unittest.TestCase):
         solver = Solver(
             TestArgs(
                 {
-                    "stack": 100,
+                    "stack_size": 100,
                     "platform_rate": 2400,
                     "trains": 1,
                     "cars": 2,
@@ -79,55 +79,55 @@ class TestOptimal(unittest.TestCase):
     def test_wiki(self):
         cases = [
             {
-                "stack": 50,
+                "stack_size": 50,
                 "platform_rate": 1560,
                 "rtd": 88.62 / 60,
                 "throughput": 1083.3,
             },
             {
-                "stack": 50,
+                "stack_size": 50,
                 "platform_rate": 2400,
                 "rtd": 67.08 / 60,
                 "throughput": 1431.17,
             },
             {
-                "stack": 100,
+                "stack_size": 100,
                 "platform_rate": 1560,
                 "rtd": 150.16 / 60,
                 "throughput": 1278.66,
             },
             {
-                "stack": 100,
+                "stack_size": 100,
                 "platform_rate": 2400,
                 "rtd": 102.08 / 60,
                 "throughput": 1793.08,
             },
             {
-                "stack": 200,
+                "stack_size": 200,
                 "platform_rate": 1560,
                 "rtd": 273.23 / 60,
                 "throughput": 1405.4,
             },
             {
-                "stack": 200,
+                "stack_size": 200,
                 "platform_rate": 2400,
                 "rtd": 187.08 / 60,
                 "throughput": 2052.62,
             },
             {
-                "stack": 500,
+                "stack_size": 500,
                 "platform_rate": 1560,
                 "rtd": 642.46 / 60,
                 "throughput": 1494.25,
             },
             {
-                "stack": 500,
+                "stack_size": 500,
                 "platform_rate": 2400,
                 "rtd": 427.08 / 60,
                 "throughput": 2247.83,
             },
             {
-                "stack": 50,
+                "stack_size": 50,
                 "platform_rate": 1200,
                 "rtd": 107.08 / 60,
                 "throughput": 896.52,
@@ -135,11 +135,15 @@ class TestOptimal(unittest.TestCase):
         ]
         for case in cases:
             solver = Solver(
-                TestArgs({k: case[k] for k in ["stack", "platform_rate"] if k in case})
+                TestArgs(
+                    {k: case[k] for k in ["stack_size", "platform_rate"] if k in case}
+                )
             )
             solution = solver.solve()
             self.assertIsNotNone(solution)
-            self.assertAlmostEqual(solution["loaded"], CAR_CAPACITY * solution["stack"])
+            self.assertAlmostEqual(
+                solution["loaded"], CAR_CAPACITY * solution["stack_size"]
+            )
             self.assertAlmostEqual(solution["rtd"], case["rtd"], delta=0.5)
             self.assertAlmostEqual(solution["throughput"], case["throughput"], delta=1)
 
@@ -150,7 +154,7 @@ class TestMinimizingThroughput(unittest.TestCase):
         solver = Solver(
             TestArgs(
                 {
-                    "stack": 100,
+                    "stack_size": 100,
                     "platform_rate": 2400,
                     "rtd": 9,
                     "throughput": 3000,
@@ -169,7 +173,7 @@ class TestMinimizingThroughput(unittest.TestCase):
         solver = Solver(
             TestArgs(
                 {
-                    "stack": 100,
+                    "stack_size": 100,
                     "platform_rate": 2400,
                     "rtd": 9,
                     "throughput": 3000,
@@ -189,7 +193,7 @@ class TestMinimizingThroughput(unittest.TestCase):
         solver = Solver(
             TestArgs(
                 {
-                    "stack": 100,
+                    "stack_size": 100,
                     "platform_rate": 2400,
                     "rtd": 9,
                     "throughput": 3000,
@@ -210,7 +214,7 @@ class TestMinimizingThroughput(unittest.TestCase):
         solver = Solver(
             TestArgs(
                 {
-                    "stack": 100,
+                    "stack_size": 100,
                     "platform_rate": 2400,
                     "rtd": 13,
                     "throughput": 3000,
@@ -230,7 +234,7 @@ class TestMinimizingThroughput(unittest.TestCase):
     @unittest.skip("TODO: figure out if we can make this consistent")
     def test_cars_effects_rtd(self):
         params = {
-            "stack": 100,
+            "stack_size": 100,
             "platform_rate": 2400,
             "trains": 1,
             "throughput": 1000.0,
@@ -248,7 +252,7 @@ class TestMaximizingThroughput(unittest.TestCase):
         solver = Solver(
             TestArgs(
                 {
-                    "stack": 100,
+                    "stack_size": 100,
                     "platform_rate": 2400,
                     "trains": 1,
                     "cars": 1,
@@ -265,7 +269,7 @@ class TestMaximizingThroughput(unittest.TestCase):
         solver = Solver(
             TestArgs(
                 {
-                    "stack": 100,
+                    "stack_size": 100,
                     "platform_rate": 2400,
                     "trains": 1,
                     "cars": 1,
@@ -282,7 +286,7 @@ class TestMaximizingThroughput(unittest.TestCase):
         solver = Solver(
             TestArgs(
                 {
-                    "stack": 100,
+                    "stack_size": 100,
                     "platform_rate": 2400,
                     "trains": 2,
                     "cars": 1,
@@ -299,7 +303,7 @@ class TestMaximizingThroughput(unittest.TestCase):
         solver = Solver(
             TestArgs(
                 {
-                    "stack": 100,
+                    "stack_size": 100,
                     "platform_rate": 2400,
                     "trains": 2,
                     "cars": 2,

@@ -255,14 +255,13 @@ def print_train_solution(solution, unit):
 
 
 def print_station_solution(solution, unit):
-    total_rate = solution["platform_rate"] * solution["cars"]
     plural_platform = pluralize("platform", solution["cars"], name_only=True)
-    print(f"{total_rate} {unit}/min total active rate of {plural_platform}")
-    efficiency = (
-        solution["throughput"] / solution["platform_rate"] / solution["cars"] * 100
-    )
     print(
-        f"{round(solution['throughput'], 2)} {unit}/min throughput ({round(efficiency, 2)}% platform efficiency)"
+        f"{solution['station_rate']} {unit}/min total active rate of {plural_platform}"
+    )
+    efficiency_msg = f"{round(solution['efficiency'], 2)}% platform efficiency"
+    print(
+        f"{round(solution['throughput'], 2)} {unit}/min throughput ({efficiency_msg})"
     )
 
 
@@ -270,15 +269,13 @@ def print_io_solution(solution, unit):
     plural_buffer = pluralize("buffer", solution["cars"], name_only=True)
 
     if "source" in solution:
-        source_ratio = solution["source"]["rate"] / solution["throughput"] * 100
-        source_ratio_msg = f"{round(source_ratio, 2)}% of throughput"
+        source_ratio_msg = (
+            f"{round(solution['source']['ratio'] * 100, 2)}% of throughput"
+        )
         print(
             f"{round(solution['source']['rate'], 2)} {unit}/min source rate ({source_ratio_msg})"
         )
-        if "drain_rate" in solution:
-            full = solution["source"]["rate"] > solution["drain_rate"]
-        else:
-            full = solution["source"]["rate"] > solution["throughput"]
+        full = solution["source"]["rate"] > solution["drain_rate"]
         if not full:
             source_buffer_size = math.ceil(solution["source"]["buffer"]["size"])
             source_buffer_time = fmt_time(solution["source"]["buffer"]["time"])
@@ -291,8 +288,7 @@ def print_io_solution(solution, unit):
     print(f"{round(solution['fill_rate'], 2)} {unit}/min available")
 
     if "sink" in solution:
-        sink_ratio = solution["sink"]["rate"] / solution["fill_rate"] * 100
-        sink_ratio_msg = f"{round(sink_ratio, 2)}% of available"
+        sink_ratio_msg = f"{round(solution['sink']['ratio'] * 100, 2)}% of available"
         print(
             f"{round(solution['sink']['rate'], 2)} {unit}/min sink rate ({sink_ratio_msg})"
         )
