@@ -1,1 +1,1 @@
-from .train_solver import TrainSolver as TrainSolver
+from .train_solver import Solver as Solver

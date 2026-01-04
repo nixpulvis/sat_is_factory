@@ -9,14 +9,14 @@ ABSOLUTE_MAX_TRAINS = 50
 ABSOLUTE_MAX_CARS = 50
 
 
-class TrainSolver:
+class Solver:
     def __init__(self, args):
         self.args = args
         self.setup()
         self.optimize()
 
     def setup(self):
-        self.stack = Int("stack")
+        self.stack_size = Int("stack_size")
         self.platform_rate = Int("platform_rate")
         self.trains = Int("trains")
         self.cars = Int("cars")
@@ -29,14 +29,14 @@ class TrainSolver:
             * (self.rtd - DOCK_DURATION * self.trains)
             / self.rtd
         )
-        self.full = CAR_CAPACITY * self.stack * self.trains * self.cars / self.rtd
+        self.full = CAR_CAPACITY * self.stack_size * self.trains * self.cars / self.rtd
         self.throughput = Min(self.partial, self.full)
 
         if self.args.source_rate is None:
-            self.loaded = self.throughput * self.rtd / (self.trains * self.cars)
+            self.loaded = self.throughput * self.rtd / (self.trains * self.cars)  # pyright: ignore[reportOperatorIssue]
         else:
             self.setup_io()
-            self.loaded = (
+            self.loaded = (  # pyright: ignore[reportOperatorIssue]
                 Min(self.throughput, self.source_rate)
                 * self.rtd
                 / (self.trains * self.cars)
@@ -129,9 +129,9 @@ class TrainSolver:
             self.opt.minimize(self.rtd)
 
     def optimize_station(self):
-        self.opt.add(self.stack == self.args.stack)
+        self.opt.add(self.stack_size == self.args.stack_size)
         self.opt.add(self.platform_rate == self.args.platform_rate)
-        self.opt.add(self.throughput > 0)
+        self.opt.add(self.throughput > 0)  # pyright: ignore[reportOperatorIssue]
 
         # If neither RTD or throughput are given, we can assume we want a
         # solution for the optimal values of both.
@@ -188,7 +188,7 @@ class TrainSolver:
 
             solution = {
                 "info": self.info,
-                "stack": z3_to_python(self.stack),
+                "stack_size": z3_to_python(self.stack_size),
                 "platform_rate": z3_to_python(self.platform_rate),
                 "trains": z3_to_python(self.trains),
                 "cars": z3_to_python(self.cars),

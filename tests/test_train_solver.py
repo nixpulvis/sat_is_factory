@@ -1,6 +1,6 @@
 import unittest
 
-from sat_is_factory.train_solver import TrainSolver
+from sat_is_factory.train_solver import Solver
 from sat_is_factory.train_solver.train_solver import CAR_CAPACITY
 
 
@@ -24,7 +24,7 @@ class TestArgs:
 # Solves for optimal RTD and Throughput when neither is provided.
 class TestOptimal(unittest.TestCase):
     def test_single_train(self):
-        solver = TrainSolver(
+        solver = Solver(
             TestArgs(
                 {
                     "stack": 100,
@@ -42,7 +42,7 @@ class TestOptimal(unittest.TestCase):
 
     # Solves for optimal RTD and Throughput when neither is provided.
     def test_multiple_train(self):
-        solver = TrainSolver(
+        solver = Solver(
             TestArgs(
                 {
                     "stack": 100,
@@ -59,7 +59,7 @@ class TestOptimal(unittest.TestCase):
         self.assertAlmostEqual(solution["throughput"], 1793.0519, places=4)
 
     def test_multiple_car(self):
-        solver = TrainSolver(
+        solver = Solver(
             TestArgs(
                 {
                     "stack": 100,
@@ -134,7 +134,7 @@ class TestOptimal(unittest.TestCase):
             },
         ]
         for case in cases:
-            solver = TrainSolver(
+            solver = Solver(
                 TestArgs({k: case[k] for k in ["stack", "platform_rate"] if k in case})
             )
             solution = solver.solve()
@@ -147,7 +147,7 @@ class TestOptimal(unittest.TestCase):
 # Minimizing to get >= throughput
 class TestMinimizingThroughput(unittest.TestCase):
     def test_many_trains_and_cars(self):
-        solver = TrainSolver(
+        solver = Solver(
             TestArgs(
                 {
                     "stack": 100,
@@ -166,7 +166,7 @@ class TestMinimizingThroughput(unittest.TestCase):
         self.assertAlmostEqual(solution["throughput"], 3555.5556, places=4)
 
     def test_many_trains_and_cars_minimize_trains(self):
-        solver = TrainSolver(
+        solver = Solver(
             TestArgs(
                 {
                     "stack": 100,
@@ -186,7 +186,7 @@ class TestMinimizingThroughput(unittest.TestCase):
         self.assertAlmostEqual(solution["throughput"], 3200, places=4)
 
     def test_many_trains_and_max_cars_minimizing_trains(self):
-        solver = TrainSolver(
+        solver = Solver(
             TestArgs(
                 {
                     "stack": 100,
@@ -207,7 +207,7 @@ class TestMinimizingThroughput(unittest.TestCase):
         self.assertAlmostEqual(solution["throughput"], 3200, places=4)
 
     def test_many_max_trains_and_cars(self):
-        solver = TrainSolver(
+        solver = Solver(
             TestArgs(
                 {
                     "stack": 100,
@@ -235,9 +235,9 @@ class TestMinimizingThroughput(unittest.TestCase):
             "trains": 1,
             "throughput": 1000.0,
         }
-        solver_a = TrainSolver(TestArgs(params))
+        solver_a = Solver(TestArgs(params))
         solution_a = solver_a.solve()
-        solver_b = TrainSolver(TestArgs({**params, "cars": 1}))
+        solver_b = Solver(TestArgs({**params, "cars": 1}))
         solution_b = solver_b.solve()
         self.assertEqual(solution_a, solution_b)
 
@@ -245,7 +245,7 @@ class TestMinimizingThroughput(unittest.TestCase):
 # Maximizing throughput for a given RTD.
 class TestMaximizingThroughput(unittest.TestCase):
     def test_max_is_partial(self):
-        solver = TrainSolver(
+        solver = Solver(
             TestArgs(
                 {
                     "stack": 100,
@@ -262,7 +262,7 @@ class TestMaximizingThroughput(unittest.TestCase):
         self.assertAlmostEqual(solution["throughput"], 1743.5152, places=4)
 
     def test_max_is_full(self):
-        solver = TrainSolver(
+        solver = Solver(
             TestArgs(
                 {
                     "stack": 100,
@@ -279,7 +279,7 @@ class TestMaximizingThroughput(unittest.TestCase):
         self.assertAlmostEqual(solution["throughput"], 1641.0256, places=4)
 
     def test_max_multiple_trains(self):
-        solver = TrainSolver(
+        solver = Solver(
             TestArgs(
                 {
                     "stack": 100,
@@ -296,7 +296,7 @@ class TestMaximizingThroughput(unittest.TestCase):
         self.assertAlmostEqual(solution["throughput"], 1289.0256, places=4)
 
     def test_max_multiple_cars(self):
-        solver = TrainSolver(
+        solver = Solver(
             TestArgs(
                 {
                     "stack": 100,

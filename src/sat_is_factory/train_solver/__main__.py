@@ -1,7 +1,7 @@
 import argparse
 import math
 
-from sat_is_factory.train_solver import TrainSolver
+from sat_is_factory.train_solver import Solver
 from sat_is_factory.train_solver.train_solver import CAR_CAPACITY
 from sat_is_factory.util import fmt_time, pluralize, time
 
@@ -57,11 +57,11 @@ until it's fully loaded/unloaded AND 0 seconds. A more generic method, if the
 train is partially loaded, or carrying other items, is to set the train to wait
 until one load/unload AND `RTD / number of trains` (TODO: test this).
 
-For pipes, use --fluid, which sets the "stack" size appropriately to 50.
+For pipes, use --fluid, which sets --stack size appropriately to 50.
 """
 
 
-class StackSentinal:
+class StackSizeSentinal:
     def items(self):
         return 100
 
@@ -72,7 +72,7 @@ class StackSentinal:
         return str(self.items())
 
 
-class PlatformSentinal:
+class PlatformRateSentinal:
     def item_rate(self):
         return 2400
 
@@ -83,8 +83,8 @@ class PlatformSentinal:
         return f"{self.item_rate()} items/min or {self.fluid_rate()} m^3/min"
 
 
-STACK_SENTINAL = StackSentinal()
-PLATFORM_SENTINAL = PlatformSentinal()
+STACK_SIZE_SENTINAL = StackSizeSentinal()
+PLATFORM_RATE_SENTINAL = PlatformRateSentinal()
 
 
 class Formatter(
@@ -101,13 +101,17 @@ def get_arguments():
 
     constants = parser.add_argument_group("constants")
     constants.add_argument(
-        "--stack", type=int, default=STACK_SENTINAL, help="Item stack quantity"
+        "--stack",
+        type=int,
+        dest="stack_size",
+        default=STACK_SIZE_SENTINAL,
+        help="Item stack size",
     )
     constants.add_argument(
         "--platform",
         type=int,
         dest="platform_rate",
-        default=PLATFORM_SENTINAL,
+        default=PLATFORM_RATE_SENTINAL,
         help="Platform loading speed",
     )
     constants.add_argument(
@@ -183,24 +187,24 @@ def set_io_defaults(args):
 
 def set_additional_defaults(parser, args):
     if args.fluid:
-        if args.stack == STACK_SENTINAL:
-            args.stack = STACK_SENTINAL.fluids()
+        if args.stack_size == STACK_SIZE_SENTINAL:
+            args.stack_size = STACK_SIZE_SENTINAL.fluids()
         else:
             parser.error("cannot use --stack with --fluid")
-        if args.platform_rate == PLATFORM_SENTINAL:
-            args.platform_rate = PLATFORM_SENTINAL.fluid_rate()
+        if args.platform_rate == PLATFORM_RATE_SENTINAL:
+            args.platform_rate = PLATFORM_RATE_SENTINAL.fluid_rate()
     else:
-        if args.stack == STACK_SENTINAL:
-            args.stack = STACK_SENTINAL.items()
-        if args.platform_rate == PLATFORM_SENTINAL:
-            args.platform_rate = PLATFORM_SENTINAL.item_rate()
+        if args.stack_size == STACK_SIZE_SENTINAL:
+            args.stack_size = STACK_SIZE_SENTINAL.items()
+        if args.platform_rate == PLATFORM_RATE_SENTINAL:
+            args.platform_rate = PLATFORM_RATE_SENTINAL.item_rate()
 
 
 def main():
     args = get_arguments()
 
     try:
-        solver = TrainSolver(args)
+        solver = Solver(args)
         print(", ".join(solver.info))
         print()
 
@@ -227,13 +231,13 @@ def print_solution(solution, unit):
 
 
 def print_train_solution(solution, unit):
-    if solution["loaded"] < CAR_CAPACITY * solution["stack"]:
+    if solution["loaded"] < CAR_CAPACITY * solution["stack_size"]:
         loaded_kind = "partially filled"
     else:
         loaded_kind = "full"
     print(pluralize("train", solution["trains"]))
     print(pluralize("car", solution["cars"]))
-    stacks = math.ceil(solution["loaded"] / solution["stack"])
+    stacks = math.ceil(solution["loaded"] / solution["stack_size"])
     print(
         f"{loaded_kind} with {round(solution['loaded'])} {unit}",
         end="",
