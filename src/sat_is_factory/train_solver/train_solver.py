@@ -166,6 +166,8 @@ class Solver:
         self.opt.add(self.source.rate == self.args.source_rate)
         if self.args.sink_rate is not None:
             self.opt.add(self.sink.rate == self.args.sink_rate)
+        else:
+            self.opt.add(self.sink.rate == self.args.source_rate)
 
     def solve(self):
         if self.opt.check() == sat:
@@ -209,9 +211,6 @@ class Solver:
                         },
                     },
                     "fill_rate": z3_to_python(self.fill_rate),
-                }
-            if self.args.sink_rate is not None:
-                solution |= {
                     "sink": {
                         "rate": z3_to_python(self.sink.rate),
                         "ratio": z3_to_python(self.sink.ratio),
